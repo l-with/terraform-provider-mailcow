@@ -1,11 +1,14 @@
 package main
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
-	"github.com/l-with/terraform-provider-mailcow/internal"
+	"context"
+	"terraform-provider-mailcow/mailcow"
+
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 )
 
 func main() {
-	plugin.Serve(&plugin.ServeOpts{
-		ProviderFunc: mailcow.Provider})
+	tfsdk.Serve(context.Background(), mailcow.New, tfsdk.ServeOpts{
+		Name: "mailcow",
+	})
 }
