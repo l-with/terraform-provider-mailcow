@@ -1,0 +1,8 @@
+# IntelliJ
+.idea
+
+# terraform
+.terraform
+.terraform.*
+*.tfrc
+terraform.tfvars
