@@ -6,3 +6,7 @@
 .terraform.*
 *.tfrc
 terraform.tfvars
+terraform.tfstate*
+
+# terraform provider
+bin
