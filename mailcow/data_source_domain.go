@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"io"
 	"log"
 	"reflect"
 	"strconv"
@@ -140,32 +141,25 @@ func dataSourceDomainRead(ctx context.Context, d *schema.ResourceData, m interfa
 	c := m.(*APIClient)
 	domainName := d.Get("domain_name").(string)
 
-	request := c.client.DomainsApi.GetDomains(ctx, "all")
+	request := c.client.DomainsApi.GetDomains(ctx, domainName)
 
 	response, err := request.Execute()
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	defer response.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
 
-	domains := make([]map[string]interface{}, 0)
-	err = json.NewDecoder(response.Body).Decode(&domains)
+		}
+	}(response.Body)
+
+	domain := make(map[string]interface{}, 0)
+	err = json.NewDecoder(response.Body).Decode(&domain)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
-	domainIndex := -1
-	for index, item := range domains {
-		if item["domain_name"] == domainName {
-			domainIndex = index
-		}
-	}
-	if domainIndex < 0 {
-		return diag.Errorf("mailcow: domain not found: %s", domainName)
-	}
-
-	domain := domains[domainIndex]
 
 	for _, argument := range []string{
 		//"active_int",
