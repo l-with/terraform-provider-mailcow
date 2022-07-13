@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.18.0
-	github.com/l-with/mailcow-go v0.0.4-alpha
+	github.com/l-with/mailcow-go v0.0.5-alpha
 )
 
 require (
