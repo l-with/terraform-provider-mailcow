@@ -151,7 +151,7 @@ func dataSourceDomainRead(ctx context.Context, d *schema.ResourceData, m interfa
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-
+			diag.FromErr(err)
 		}
 	}(response.Body)
 
