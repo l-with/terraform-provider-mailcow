@@ -7,7 +7,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"io"
-	"log"
 	"reflect"
 	"strconv"
 )
@@ -132,6 +131,12 @@ func dataSourceDomain() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"tags": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Optional: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
 		},
 	}
 }
@@ -199,7 +204,7 @@ func dataSourceDomainRead(ctx context.Context, d *schema.ResourceData, m interfa
 		"relay_unknown_only",
 	} {
 		boolValue := false
-		if domain[argument] == 1 {
+		if int(domain[argument].(float64)) >= 1 {
 			boolValue = true
 		}
 		err = d.Set(argument, boolValue)
@@ -219,7 +224,6 @@ func dataSourceDomainRead(ctx context.Context, d *schema.ResourceData, m interfa
 
 	rl := make(map[string]string)
 	value := reflect.ValueOf(domain["rl"])
-	log.Print("MapKeys: ", value.MapKeys())
 	for _, key := range value.MapKeys() {
 		rl[fmt.Sprint(key)] = fmt.Sprint(value.MapIndex(key))
 	}
@@ -230,7 +234,28 @@ func dataSourceDomainRead(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(err)
 	}
 
+	if domain["tags"] != nil {
+		numTags := len(domain["tags"].([]interface{}))
+		tags := make([]string, numTags)
+		for i, tag := range domain["tags"].([]interface{}) {
+			tags[i] = tag.(string)
+		}
+		err = d.Set("tags", tags)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	} else {
+		tags := make([]string, 0, 0)
+		err = d.Set("tags", tags)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	d.SetId(domainName)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	return diags
 }
