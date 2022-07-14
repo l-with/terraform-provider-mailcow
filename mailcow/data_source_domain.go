@@ -169,7 +169,6 @@ func dataSourceDomainRead(ctx context.Context, d *schema.ResourceData, m interfa
 	for _, argument := range []string{
 		//"active_int",
 		"aliases_left",
-		"aliases_left",
 		"aliases_in_domain",
 		//"backupmx_int",
 		"bytes_total",
@@ -196,7 +195,7 @@ func dataSourceDomainRead(ctx context.Context, d *schema.ResourceData, m interfa
 		}
 	}
 
-	for _, argument := range []string{
+	for _, argumentBool := range []string{
 		"active",
 		"backupmx",
 		"gal",
@@ -204,10 +203,10 @@ func dataSourceDomainRead(ctx context.Context, d *schema.ResourceData, m interfa
 		"relay_unknown_only",
 	} {
 		boolValue := false
-		if int(domain[argument].(float64)) >= 1 {
+		if int(domain[argumentBool].(float64)) >= 1 {
 			boolValue = true
 		}
-		err = d.Set(argument, boolValue)
+		err = d.Set(argumentBool, boolValue)
 		if err != nil {
 			return diag.FromErr(err)
 		}
