@@ -3,6 +3,7 @@ package mailcow
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -166,6 +167,10 @@ func dataSourceDomainRead(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(err)
 	}
 
+	if domain["domain_name"] != domainName {
+		return diag.FromErr(errors.New(fmt.Sprint("domain '", domainName, "' not found")))
+	}
+
 	for _, argument := range []string{
 		//"active_int",
 		"aliases_left",
@@ -203,8 +208,10 @@ func dataSourceDomainRead(ctx context.Context, d *schema.ResourceData, m interfa
 		"relay_unknown_only",
 	} {
 		boolValue := false
-		if int(domain[argumentBool].(float64)) >= 1 {
-			boolValue = true
+		if domain[argumentBool] != nil {
+			if int(domain[argumentBool].(float64)) >= 1 {
+				boolValue = true
+			}
 		}
 		err = d.Set(argumentBool, boolValue)
 		if err != nil {
@@ -212,31 +219,37 @@ func dataSourceDomainRead(ctx context.Context, d *schema.ResourceData, m interfa
 		}
 	}
 
-	quotaUsedInDomain, err := strconv.Atoi(fmt.Sprint(domain["quota_used_in_domain"]))
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	err = d.Set("quota_used_in_domain", quotaUsedInDomain)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	rl := make(map[string]string)
-	value := reflect.ValueOf(domain["rl"])
-	for _, key := range value.MapKeys() {
-		rl[fmt.Sprint(key)] = fmt.Sprint(value.MapIndex(key))
-	}
-	rateLimit := rl["value"] + rl["frame"]
-
-	err = d.Set("rate_limit", rateLimit)
-	if err != nil {
-		return diag.FromErr(err)
+	domainQuotaUsedInDomain := domain["quota_used_in_domain"]
+	if domainQuotaUsedInDomain != nil {
+		quotaUsedInDomain, err := strconv.Atoi(fmt.Sprint(domainQuotaUsedInDomain))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		err = d.Set("quota_used_in_domain", quotaUsedInDomain)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
-	if domain["tags"] != nil {
-		numTags := len(domain["tags"].([]interface{}))
+	domainRl := domain["rl"]
+	if domainRl != nil {
+		rl := make(map[string]string)
+		value := reflect.ValueOf(domainRl)
+		for _, key := range value.MapKeys() {
+			rl[fmt.Sprint(key)] = fmt.Sprint(value.MapIndex(key))
+		}
+		rateLimit := rl["value"] + rl["frame"]
+		err = d.Set("rate_limit", rateLimit)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	domainTags := domain["tags"]
+	if domainTags != nil {
+		numTags := len(domainTags.([]interface{}))
 		tags := make([]string, numTags)
-		for i, tag := range domain["tags"].([]interface{}) {
+		for i, tag := range domainTags.([]interface{}) {
 			tags[i] = tag.(string)
 		}
 		err = d.Set("tags", tags)
