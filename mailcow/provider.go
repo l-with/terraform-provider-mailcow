@@ -26,7 +26,9 @@ func Provider() *schema.Provider {
 				Description: "The mailcow API key, can optionally be passed as `MAILCOW_API_KEY` environmental variable",
 			},
 		},
-		ResourcesMap: map[string]*schema.Resource{},
+		ResourcesMap: map[string]*schema.Resource{
+			"mailcow_domain": resourceDomain(),
+		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"mailcow_domain": dataSourceDomain(),
 		},
@@ -50,6 +52,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	config.Scheme = "https"
 	config.AddDefaultHeader("X-API-Key", apiKey)
 	config.AddDefaultHeader("accept", "application/json")
+	config.Debug = true
 
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
