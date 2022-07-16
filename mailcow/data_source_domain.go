@@ -176,7 +176,6 @@ func dataSourceDomainRead(ctx context.Context, d *schema.ResourceData, m interfa
 		"aliases_left",
 		"aliases_in_domain",
 		//"backupmx_int",
-		"bytes_total",
 		"domain_admins",
 		"def_quota_for_mbox",
 		"def_new_mailbox_quota",
@@ -189,17 +188,34 @@ func dataSourceDomainRead(ctx context.Context, d *schema.ResourceData, m interfa
 		"max_quota_for_mbox",
 		"mboxes_in_domain",
 		"mboxes_left",
-		"msgs_total",
 		//"relay_all_recipients_int",
 		//"relay_unknown_only_int",
 		"relayhost",
 	} {
-		err = d.Set(argument, domain[argument])
-		if err != nil {
-			return diag.FromErr(err)
+		domainArgument := domain[argument]
+		if domainArgument != nil {
+			err = d.Set(argument, domainArgument)
+			if err != nil {
+				return diag.FromErr(err)
+			}
 		}
 	}
 
+	for _, argumentNumber := range []string{
+		"bytes_total",
+		"msgs_total",
+	} {
+		domainArgumentNumber := domain[argumentNumber]
+		if domainArgumentNumber != nil {
+			// the API returns an int for zero and a string for a value greater tha zero
+			value := reflect.ValueOf(domain[argumentNumber])
+			intValue, err := strconv.Atoi(fmt.Sprint(value))
+			err = d.Set(argumentNumber, intValue)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
+	}
 	for _, argumentBool := range []string{
 		"active",
 		"backupmx",
