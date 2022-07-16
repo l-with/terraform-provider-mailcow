@@ -168,8 +168,6 @@ func resourceDomainCreate(ctx context.Context, d *schema.ResourceData, m interfa
 }
 
 func resourceDomainRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	log.Printf("****** resourceDomainRead ******")
-
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
@@ -190,6 +188,7 @@ func resourceDomainRead(ctx context.Context, d *schema.ResourceData, m interface
 		}
 	}(response.Body)
 
+	log.Print("[TRACE] response.Body: ", response.Body)
 	domain := make(map[string]interface{}, 0)
 	err = json.NewDecoder(response.Body).Decode(&domain)
 	if err != nil {
@@ -311,8 +310,6 @@ func resourceDomainRead(ctx context.Context, d *schema.ResourceData, m interface
 }
 
 func resourceDomainUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	log.Printf("****** resourceDomainUpdate ******")
-
 	c := m.(*APIClient)
 
 	domain := d.Id()
@@ -327,7 +324,6 @@ func resourceDomainUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		updateDomainRequestAttr.SetDefquota(float32(d.Get("defquota").(int)))
 	}
 	if d.HasChange("description") {
-		log.Print("decription has change to: ", d.Get("description").(string))
 		updateDomainRequestAttr.SetDescription(d.Get("description").(string))
 	}
 	if d.HasChange("mailboxes") {
@@ -379,13 +375,6 @@ func resourceDomainUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 	items[0] = domain
 
 	updateDomainRequest.SetItems(items)
-	/*
-		request := c.client.DomainsApi.CreateDomain(ctx).CreateDomainRequest(*createDomainRequest)
-		_, _, err := c.client.DomainsApi.CreateDomainExecute(request)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	*/
 	updateDomainRequest.SetAttr(*updateDomainRequestAttr)
 	request := c.client.DomainsApi.UpdateDomain(ctx).UpdateDomainRequest(*updateDomainRequest)
 	_, _, err := c.client.DomainsApi.UpdateDomainExecute(request)
@@ -393,22 +382,10 @@ func resourceDomainUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(err)
 	}
 
-	/*
-		app := resourceStageCaptchaSchemaToProvider(d)
-
-		res, hr, err := c.client.StagesApi.StagesCaptchaUpdate(ctx, d.Id()).CaptchaStageRequest(*app).Execute()
-		if err != nil {
-			return httpToDiag(d, hr, err)
-		}
-	*/
-
 	return resourceDomainRead(ctx, d, m)
 }
 
 func resourceDomainDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	//return diag.Errorf("not implemented")
-	log.Printf("****** resourceDomainDelete ******")
-
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
