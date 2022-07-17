@@ -24,5 +24,5 @@ jobs:
         env:
           # These secrets will need to be configured for the repository:
           MAILCOW_HOST_NAME: ${{ secrets.MAILCOW_HOST_NAME }}
-          MAILCOW_TOKEN: ${{ secrets.MAILCOW_TOKEN }}
+          MAILCOW_API_KEY: ${{ secrets.MAILCOW_API_KEY }}
         run: go test -v ./...
