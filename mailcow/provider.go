@@ -27,6 +27,7 @@ func Provider() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
+			"mailcow_alias":   resourceAlias(),
 			"mailcow_domain":  resourceDomain(),
 			"mailcow_mailbox": resourceMailbox(),
 		},
