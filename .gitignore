@@ -1,6 +1,9 @@
 # IntelliJ
 .idea
 
+# VS Code
+.vscode
+
 # terraform
 .terraform
 .terraform.*
