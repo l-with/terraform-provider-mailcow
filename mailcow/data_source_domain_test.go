@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestAccDataSourceStage(t *testing.T) {
+func TestAccDataSourceDomain(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
