@@ -6,7 +6,7 @@ description: |-
 
 # mailcow_dkim (Data Source)
 
-Provides details about DKIM for a domain in mailcow. This data source is useful if you want provide the DNS entries by terraform.
+Provides details about DKIM for a domain in mailcow. This data source is useful if you want to use a non-terraform managed DKIM information for instance if you want provide the DKIM DNS entry by terraform.
 
 ## Example Usage
 ```terraform
