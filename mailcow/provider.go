@@ -30,6 +30,7 @@ func Provider() *schema.Provider {
 			"mailcow_alias":   resourceAlias(),
 			"mailcow_domain":  resourceDomain(),
 			"mailcow_mailbox": resourceMailbox(),
+			"mailcow_dkim":    resourceDkim(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"mailcow_domain": dataSourceDomain(),
