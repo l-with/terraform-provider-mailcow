@@ -9,6 +9,6 @@ description: |-
 Provides a mailbox in mailcow. This can be used to create, modify, and delete mailboxes.
 
 ## Example Usage
-{{ tffile "examples/resources/mailcow_mailbox/resource.tf" }}
+{{ tffile (printf "examples/resources/%s/resource.tf" .Name)}}
 
 {{ .SchemaMarkdown | trimspace }}

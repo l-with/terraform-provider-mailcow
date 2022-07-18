@@ -9,6 +9,6 @@ description: |-
 Provides details about a domain in mailcow. This resource is useful if you want to use a non-terraform managed domain.
 
 ## Example Usage
-{{ tffile "examples/data-sources/mailcow_domain/data-source.tf" }}
+{{ tffile (printf "examples/data-sources/%s/data-source.tf" .Name)}}
 
 {{ .SchemaMarkdown | trimspace }}

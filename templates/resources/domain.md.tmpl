@@ -9,6 +9,6 @@ description: |-
 Provides a domain in mailcow. This can be used to create, modify, and delete domains.
 
 ## Example Usage
-{{ tffile "examples/resources/mailcow_domain/resource.tf" }}
+{{ tffile (printf "examples/resources/%s/resource.tf" .Name)}}
 
 {{ .SchemaMarkdown | trimspace }}
