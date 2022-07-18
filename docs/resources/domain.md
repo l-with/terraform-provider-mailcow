@@ -6,7 +6,7 @@ description: |-
 
 # mailcow_domain (Resource)
 
-Provides a mailcow domain. This can be used to create, modify, and delete domains.
+Provides a domain in mailcow. This can be used to create, modify, and delete domains.
 
 ## Example Usage
 ```terraform
