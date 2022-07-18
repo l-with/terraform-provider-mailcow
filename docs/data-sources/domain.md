@@ -2,12 +2,9 @@
 page_title: "mailcow_domain Data Source - terraform-provider-mailcow"
 subcategory: ""
 description: |-
-  
 ---
 
 # mailcow_domain (Data Source)
-
-
 
 Provides details about a domain in mailcow. This resource is useful if you want to use a non-terraform managed domain.
 
