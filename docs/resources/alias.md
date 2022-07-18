@@ -11,7 +11,7 @@ Provides an alias in mailcow. This can be used to create, modify, and delete ali
 ## Example Usage
 ```terraform
 # create alias
-resource "mailcow_alias" "alias" {
+resource "mailcow_alias" "demo" {
   address = "alias-demo@440044.xyz"
   goto    = "demo@440044.xyz"
 }
