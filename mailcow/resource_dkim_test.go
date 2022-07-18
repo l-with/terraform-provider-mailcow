@@ -33,7 +33,7 @@ resource "mailcow_domain" "domain" {
 }
 
 resource "mailcow_dkim" "dkim" {
-  domain = "%[1]s"
+  domain = mailcow_domain.domain.id
   length = %[2]d
 }
 `, domain, length)
