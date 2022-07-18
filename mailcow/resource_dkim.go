@@ -3,17 +3,19 @@ package mailcow
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	api "github.com/l-with/mailcow-go"
 	"io"
+	"reflect"
+	"strconv"
 )
 
 func resourceDkim() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceDkimCreate,
 		ReadContext:   resourceDkimRead,
-		UpdateContext: resourceDkimUpdate,
 		DeleteContext: resourceDkimDelete,
 		Schema: map[string]*schema.Schema{
 			"domain": {
@@ -28,6 +30,7 @@ func resourceDkim() *schema.Resource {
 			"length": {
 				Type:     schema.TypeInt,
 				Required: true,
+				ForceNew: true,
 			},
 			"dkim_txt": {
 				Type:     schema.TypeString,
@@ -50,7 +53,7 @@ func resourceDkim() *schema.Resource {
 
 func resourceDkimCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
+	// var diags diag.Diagnostics
 
 	c := m.(*APIClient)
 
@@ -66,17 +69,18 @@ func resourceDkimCreate(ctx context.Context, d *schema.ResourceData, m interface
 	}
 
 	d.SetId(d.Get("domain").(string))
-	return diags
+
+	return resourceDkimRead(ctx, d, m)
 }
 
 func resourceDkimRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	// Warning or errors can be collected in a slice type
-	// var diags diag.Diagnostics
+	var diags diag.Diagnostics
 
 	c := m.(*APIClient)
 	domain := d.Id()
 
-	request := c.client.DomainsApi.GetDomains(ctx, domain)
+	request := c.client.DKIMApi.GetDKIMKey(ctx, domain)
 
 	response, err := request.Execute()
 	if err != nil {
@@ -98,7 +102,6 @@ func resourceDkimRead(ctx context.Context, d *schema.ResourceData, m interface{}
 
 	for _, argument := range []string{
 		"pubkey",
-		"length",
 		"dkim_txt",
 		"dkim_selector",
 		//"privkey",
@@ -111,10 +114,23 @@ func resourceDkimRead(ctx context.Context, d *schema.ResourceData, m interface{}
 			}
 		}
 	}
+	for _, argumentNumber := range []string{
+		"length",
+	} {
+		dkimArgumentNumber := dkim[argumentNumber]
+		if dkimArgumentNumber != nil {
+			value := reflect.ValueOf(dkim[argumentNumber])
+			intValue, err := strconv.Atoi(fmt.Sprint(value))
+			err = d.Set(argumentNumber, intValue)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
+	}
 
 	d.SetId(domain)
 
-	return resourceDomainRead(ctx, d, m)
+	return diags
 }
 
 func resourceDkimUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
