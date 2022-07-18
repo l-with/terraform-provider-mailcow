@@ -1,0 +1,14 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+---
+
+# {{.Name}} ({{.Type}})
+
+Provides a mailcow domain. This can be used to create, modify, and delete domains.
+
+## Example Usage
+{{ tffile "examples/resources/mailcow_domain/resource.tf" }}
+
+{{ .SchemaMarkdown | trimspace }}
