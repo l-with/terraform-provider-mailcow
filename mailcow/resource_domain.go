@@ -267,17 +267,17 @@ func resourceDomainRead(ctx context.Context, d *schema.ResourceData, m interface
 
 	domainRl := domain["rl"]
 	if domainRl != nil {
-		rl := make(map[string]string)
-		value := reflect.ValueOf(domainRl)
-		log.Print("MapKeys: ", value.MapKeys())
-		for _, key := range value.MapKeys() {
-			rl[fmt.Sprint(key)] = fmt.Sprint(value.MapIndex(key))
-		}
-		rateLimit := rl["value"] + rl["frame"]
-
-		err = d.Set("rate_limit", rateLimit)
-		if err != nil {
-			return diag.FromErr(err)
+		if reflect.ValueOf(domainRl).Kind() != reflect.Bool {
+			rl := make(map[string]string)
+			value := reflect.ValueOf(domainRl)
+			for _, key := range value.MapKeys() {
+				rl[fmt.Sprint(key)] = fmt.Sprint(value.MapIndex(key))
+			}
+			rateLimit := rl["value"] + rl["frame"]
+			err = d.Set("rate_limit", rateLimit)
+			if err != nil {
+				return diag.FromErr(err)
+			}
 		}
 	}
 
