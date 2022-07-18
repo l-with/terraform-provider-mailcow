@@ -6,7 +6,7 @@ description: |-
 
 # mailcow_domain (Data Source)
 
-Provides details about a domain in mailcow. This resource is useful if you want to use a non-terraform managed domain.
+Provides details about a domain in mailcow. This data source is useful if you want to use a non-terraform managed domain.
 
 ## Example Usage
 ```terraform
