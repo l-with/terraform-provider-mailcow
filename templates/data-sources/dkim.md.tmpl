@@ -1,0 +1,14 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+---
+
+# {{.Name}} ({{.Type}})
+
+Provides details about DKIM for a domain in mailcow. This data source is useful if you want provide the DNS entries by terraform.
+
+## Example Usage
+{{ tffile (printf "examples/data-sources/%s/data-source.tf" .Name)}}
+
+{{ .SchemaMarkdown | trimspace }}
