@@ -21,13 +21,13 @@ resource "mailcow_mailbox" "demo" {
 }
 
 resource "mailcow_alias" "demo" {
-  address = "alias-demo@440044.xyz"
+  address = "alias-demo@${mailcow_domain.demo.domain}"
   goto    = mailcow_mailbox.demo.id
 }
 
 resource "mailcow_dkim" "demo" {
   domain = mailcow_domain.demo.domain
-  lentgh = 2048
+  length = 2048
 }
 ```
 

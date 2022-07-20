@@ -252,9 +252,18 @@ func resourceAliasDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	deleteAliasRequest.SetItems(items)
 
 	request := c.client.AliasesApi.DeleteAlias(ctx).DeleteAliasRequest(*deleteAliasRequest)
-	_, _, err := c.client.AliasesApi.DeleteAliasExecute(request)
+	response, _, err := c.client.AliasesApi.DeleteAliasExecute(request)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+	if response[len(response)-1]["type"].(string) != "success" {
+		return diag.FromErr(errors.New(fmt.Sprintf(
+			"resourceAliasDelete %s (id: %s): %s - %s",
+			d.Get("address").(string),
+			d.Id(),
+			response[0]["type"].(string),
+			response[0]["msg"].(string))),
+		)
 	}
 
 	d.SetId("")

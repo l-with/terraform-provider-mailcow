@@ -3,6 +3,7 @@ package mailcow
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -36,6 +37,11 @@ func resourceMailbox() *schema.Resource {
 				Description: "left part of email address",
 				Required:    true,
 				ForceNew:    true,
+			},
+			"address": {
+				Type:        schema.TypeString,
+				Description: "e-mail address",
+				Computed:    true,
 			},
 			"full_name": {
 				Type:        schema.TypeString,
@@ -148,6 +154,11 @@ func resourceMailboxCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	d.SetId(localPart + "@" + domain)
+	err = d.Set("address", d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	return diags
 }
 
@@ -244,6 +255,10 @@ func resourceMailboxRead(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 
 	d.SetId(emailAddress)
+	err = d.Set("address", emailAddress)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	return diags
 }
@@ -297,9 +312,12 @@ func resourceMailboxDelete(ctx context.Context, d *schema.ResourceData, m interf
 	deleteMailboxRequest.SetItems(items)
 
 	request := c.client.MailboxesApi.DeleteMailbox(ctx).DeleteMailboxRequest(*deleteMailboxRequest)
-	_, _, err := c.client.MailboxesApi.DeleteMailboxExecute(request)
+	response, _, err := c.client.MailboxesApi.DeleteMailboxExecute(request)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+	if response[len(response)-1]["type"].(string) != "success" {
+		return diag.FromErr(errors.New(response[0]["type"].(string)))
 	}
 
 	d.SetId("")

@@ -8,32 +8,44 @@ import (
 )
 
 func TestAccResourceAlias(t *testing.T) {
-	aliasPrefix := "alias-with"
+	domain := "domain-with4test-domain.440044.xyz"
+	localPart := "localpart-with4alias-test"
+	aliasLocalPart := "alias-localpart-with4alias-test"
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceAliasSimple(aliasPrefix),
+				Config: testAccResourceAliasSimple(domain, localPart, aliasLocalPart),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("mailcow_alias.alias", "address", aliasPrefix+"-demo@440044.xyz"),
+					resource.TestCheckResourceAttr("mailcow_alias.alias", "address", aliasLocalPart+"@"+domain),
 				),
 			},
 			{
-				Config: testAccResourceAliasSimple(aliasPrefix + "2"),
+				Config: testAccResourceAliasSimple(domain, localPart, aliasLocalPart+"2"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("mailcow_alias.alias", "address", aliasPrefix+"2-demo@440044.xyz"),
+					resource.TestCheckResourceAttr("mailcow_alias.alias", "address", aliasLocalPart+"2@"+domain),
 				),
 			},
 		},
 	})
 }
 
-func testAccResourceAliasSimple(name string) string {
+func testAccResourceAliasSimple(domain string, localPart string, aliasLocalPart string) string {
 	return fmt.Sprintf(`
-resource "mailcow_alias" "alias" {
-  address = "%[1]s-demo@440044.xyz"
-  goto = "demo@440044.xyz"
+resource "mailcow_domain" "domain" {
+  domain = "%[1]s"
 }
-`, name)
+
+resource "mailcow_mailbox" "mailbox" {
+  local_part = "%[2]s"
+  domain     = mailcow_domain.domain.id
+  password   = "secret-password"
+}
+
+resource "mailcow_alias" "alias" {
+  address = "%[3]s@${mailcow_domain.domain.domain}"
+  goto    = mailcow_mailbox.mailbox.address
+}
+`, domain, localPart, aliasLocalPart)
 }
