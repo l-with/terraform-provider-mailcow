@@ -256,7 +256,7 @@ func resourceAliasDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if response[0]["type"].(string) != "success" {
+	if response[len(response)-1]["type"].(string) != "success" {
 		return diag.FromErr(errors.New(fmt.Sprintf(
 			"resourceAliasDelete %s (id: %s): %s - %s",
 			d.Get("address").(string),

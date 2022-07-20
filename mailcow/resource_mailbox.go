@@ -316,7 +316,7 @@ func resourceMailboxDelete(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if response[0]["type"].(string) != "success" {
+	if response[len(response)-1]["type"].(string) != "success" {
 		return diag.FromErr(errors.New(response[0]["type"].(string)))
 	}
 

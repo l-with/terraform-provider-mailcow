@@ -8,8 +8,8 @@ import (
 )
 
 func TestAccResourceMailbox(t *testing.T) {
-	domain := "domain-with4mailbox-test.440044.xyz"
-	localPart := "mailbox-with"
+	domain := "domain-with4mailbox-test-440044.xyz"
+	localPart := "localpart-with4mailbox-test"
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -31,9 +31,9 @@ resource "mailcow_domain" "domain" {
 }
 
 resource "mailcow_mailbox" "mailbox" {
-  domain     = mailcow_domain.domain.domain 
   local_part = "%[2]s"
-  password   = "password"
-  quota      = 3072
-}`, domain, localPart)
+  domain     = mailcow_domain.domain.id
+  password   = "secret-password"
+}
+`, domain, localPart)
 }

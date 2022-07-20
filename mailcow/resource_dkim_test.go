@@ -8,7 +8,7 @@ import (
 )
 
 func TestAccResourceDkim(t *testing.T) {
-	domain := "domain-with.440044.xyz"
+	domain := "domain-with4test-dkim.440044.xyz"
 	length := 2048
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

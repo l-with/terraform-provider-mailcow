@@ -10,7 +10,7 @@ import (
 )
 
 func TestAccDataSourceDkim(t *testing.T) {
-	domain := "domain-with.440044.xyz"
+	domain := "domain-with4test-dkim.440044.xyz"
 	length := 2048
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -35,12 +35,12 @@ resource "mailcow_domain" "domain" {
 }
 
 resource "mailcow_dkim" "dkim" {
-  domain = mailcow_domain.domain.id
+  domain = mailcow_domain.domain.domain
   length = %[2]d
 }
 
 data "mailcow_dkim" "demo" {
-  domain = mailcow_dkim.dkim.id
+  domain = mailcow_dkim.dkim.domain
 }
 `, domain, length)
 }
