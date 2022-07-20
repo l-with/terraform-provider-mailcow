@@ -3,6 +3,7 @@ package mailcow
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -311,9 +312,12 @@ func resourceMailboxDelete(ctx context.Context, d *schema.ResourceData, m interf
 	deleteMailboxRequest.SetItems(items)
 
 	request := c.client.MailboxesApi.DeleteMailbox(ctx).DeleteMailboxRequest(*deleteMailboxRequest)
-	_, _, err := c.client.MailboxesApi.DeleteMailboxExecute(request)
+	response, _, err := c.client.MailboxesApi.DeleteMailboxExecute(request)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+	if response[0]["type"].(string) != "success" {
+		return diag.FromErr(errors.New(response[0]["type"].(string)))
 	}
 
 	d.SetId("")
