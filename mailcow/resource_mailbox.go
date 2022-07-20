@@ -37,6 +37,11 @@ func resourceMailbox() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 			},
+			"address": {
+				Type:        schema.TypeString,
+				Description: "e-mail address",
+				Computed:    true,
+			},
 			"full_name": {
 				Type:        schema.TypeString,
 				Description: "Full name of the mailbox user",
@@ -148,6 +153,11 @@ func resourceMailboxCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	d.SetId(localPart + "@" + domain)
+	err = d.Set("address", d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	return diags
 }
 
@@ -244,6 +254,10 @@ func resourceMailboxRead(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 
 	d.SetId(emailAddress)
+	err = d.Set("address", emailAddress)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	return diags
 }

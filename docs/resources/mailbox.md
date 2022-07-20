@@ -42,4 +42,5 @@ resource "mailcow_mailbox" "demo" {
 
 ### Read-Only
 
+- `address` (String) e-mail address
 - `id` (String) The ID of this resource.
