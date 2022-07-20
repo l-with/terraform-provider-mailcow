@@ -8,7 +8,7 @@ import (
 )
 
 func TestAccResourceMailbox(t *testing.T) {
-	domain := "domain-with.440044.xyz"
+	domain := "domain-with4mailbox-test.440044.xyz"
 	localPart := "mailbox-with"
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

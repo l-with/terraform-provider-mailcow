@@ -8,7 +8,7 @@ import (
 )
 
 func TestAccResourceDomain(t *testing.T) {
-	subdomainPrefix := "domain-with"
+	subdomainPrefix := "domain-with4domain-test"
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
