@@ -63,7 +63,11 @@ func resourceDkimCreate(ctx context.Context, d *schema.ResourceData, m interface
 	createDkimRequest.SetDkimSelector(d.Get("dkim_selector").(string))
 
 	request := c.client.DKIMApi.GenerateDKIMKey(ctx).GenerateDKIMKeyRequest(*createDkimRequest)
-	_, _, err := c.client.DKIMApi.GenerateDKIMKeyExecute(request)
+	response, _, err := c.client.DKIMApi.GenerateDKIMKeyExecute(request)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	err = checkResponse(response, resourceDkimCreate, d.Get("domain").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -106,6 +106,10 @@ func resourceAliasCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	err = checkResponse(response, resourceAliasCreate, d.Get("address").(string))
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	err, id := getAliasId(response)
 	if err != nil {
@@ -238,19 +242,14 @@ func resourceAliasUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 	updateAliasRequest.SetItems(items)
 	updateAliasRequest.SetAttr(*updateAliasRequestAttr)
 	request := c.client.AliasesApi.UpdateAlias(ctx).UpdateAliasRequest(*updateAliasRequest)
-	_, _, err := c.client.AliasesApi.UpdateAliasExecute(request)
+	response, _, err := c.client.AliasesApi.UpdateAliasExecute(request)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
-	/*
-		responseMsg := createAliasResponse[0].GetMsg()
-		responseType := createAliasResponse[0].GetType()
-		err = ckeckResponse(responseType, responseMsg)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	*/
+	err = checkResponse(response, resourceAliasCreate, d.Get("address").(string))
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	return resourceAliasRead(ctx, d, m)
 }
@@ -272,7 +271,7 @@ func resourceAliasDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = checkResponse(response, resourceDomainDelete, d.Get("address").(string)+" "+d.Id())
+	err = checkResponse(response, resourceAliasDelete, d.Get("address").(string)+" "+d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}

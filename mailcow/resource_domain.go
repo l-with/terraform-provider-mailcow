@@ -162,11 +162,7 @@ func resourceDomainCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = checkResponse(
-		response,
-		resourceDomainCreate,
-		d.Get("domain").(string),
-	)
+	err = checkResponse(response, resourceDomainCreate, d.Get("domain").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}

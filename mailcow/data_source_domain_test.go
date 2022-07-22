@@ -3,6 +3,7 @@ package mailcow
 import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"regexp"
 )
 
 import (
@@ -21,6 +22,10 @@ func TestAccDataSourceDomain(t *testing.T) {
 					resource.TestCheckResourceAttr("data.mailcow_domain.demo", "domain_name", domain),
 				),
 			},
+			{
+				Config:      testAccDataSourceDomainError(),
+				ExpectError: regexp.MustCompile("not found"),
+			},
 		},
 	})
 }
@@ -35,4 +40,12 @@ data "mailcow_domain" "demo" {
   domain_name = mailcow_domain.domain.domain
 }
 `, domain)
+}
+
+func testAccDataSourceDomainError() string {
+	return fmt.Sprintf(`
+data "mailcow_domain" "error" {
+  domain_name = "xyzzy"
+}
+`)
 }

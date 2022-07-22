@@ -3,6 +3,7 @@ package mailcow
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -120,9 +121,12 @@ func dataSourceMailboxRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
+	if mailboxAddress(mailbox) != emailAddress {
+		return diag.FromErr(errors.New(fmt.Sprint("mailbox '", emailAddress, "' not found")))
+	}
+
 	for _, argument := range []string{
 		"domain",
-		"address",
 		"local_part",
 		"full_name",
 	} {
@@ -189,4 +193,18 @@ func dataSourceMailboxRead(ctx context.Context, d *schema.ResourceData, m interf
 	d.SetId(emailAddress)
 
 	return diags
+}
+
+func mailboxAddress(mailbox map[string]interface{}) string {
+	localPart := ""
+	mailboxLocalPart := mailbox["local_part"]
+	if mailboxLocalPart != nil {
+		localPart = mailboxLocalPart.(string)
+	}
+	domain := ""
+	mailboxDomain := mailbox["domain"]
+	if mailboxDomain != nil {
+		domain = mailboxDomain.(string)
+	}
+	return localPart + "@" + domain
 }

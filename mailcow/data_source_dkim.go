@@ -3,6 +3,8 @@ package mailcow
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"io"
@@ -64,6 +66,10 @@ func dataSourceDkimRead(ctx context.Context, d *schema.ResourceData, m interface
 	err = json.NewDecoder(response.Body).Decode(&dkim)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	if len(dkim) == 0 {
+		return diag.FromErr(errors.New(fmt.Sprint("dkim for domain '", domain, "' not found")))
 	}
 
 	for _, argument := range []string{
