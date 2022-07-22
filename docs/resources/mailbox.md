@@ -23,6 +23,7 @@ resource "mailcow_mailbox" "demo" {
 ### Required
 
 - `domain` (String) domain name
+- `full_name` (String) Full name of the mailbox user
 - `local_part` (String) left part of email address
 - `password` (String, Sensitive) mailbox password
 
@@ -30,7 +31,6 @@ resource "mailcow_mailbox" "demo" {
 
 - `active` (Boolean) is alias active or not
 - `force_pw_update` (Boolean) forces the user to update its password on first login
-- `full_name` (String) Full name of the mailbox user
 - `imap_access` (Boolean) if 'IMAP' is an allowed protocol
 - `pop3_access` (Boolean) if 'POP3' is an allowed protocol
 - `quota` (Number) mailbox quota
