@@ -302,6 +302,8 @@ github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348/go.mod h1:B69LE
 github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0SNc=
 github.com/l-with/mailcow-go v0.0.42-beta h1:+8p2RjcGBmBi/3R5kORg4k5zuwNbet8FlPxaYiznhug=
 github.com/l-with/mailcow-go v0.0.42-beta/go.mod h1:paN3tojCwB3bSJ/pwGspVvGIiRmBT3ihQrpkSFWTFhQ=
+github.com/l-with/mailcow-go v0.0.44-beta h1:GEHrWe7x4H1W80RD8QkdmbNv9ZtGPywHPV0gd9riQxU=
+github.com/l-with/mailcow-go v0.0.44-beta/go.mod h1:paN3tojCwB3bSJ/pwGspVvGIiRmBT3ihQrpkSFWTFhQ=
 github.com/matryer/is v1.2.0/go.mod h1:2fLPjFQM9rhQ15aVEtbuwhJinnOqrmgXPNdZsdwlWXA=
 github.com/mattn/go-colorable v0.0.9/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaOChaDxuIBZU=
 github.com/mattn/go-colorable v0.1.9/go.mod h1:u6P/XSegPjTcexA+o6vUJrdnUu04hMope9wVRipJSqc=
