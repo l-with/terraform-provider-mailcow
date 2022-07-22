@@ -3,6 +3,7 @@ package mailcow
 import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"regexp"
 )
 
 import (
@@ -23,6 +24,10 @@ func TestAccDataSourceMailbox(t *testing.T) {
 					resource.TestCheckResourceAttr("data.mailcow_mailbox.mailbox", "local_part", localPart),
 				),
 			},
+			{
+				Config:      testAccDataSourceMailboxError(),
+				ExpectError: regexp.MustCompile("not found"),
+			},
 		},
 	})
 }
@@ -37,10 +42,19 @@ resource "mailcow_mailbox" "mailbox" {
   local_part = "%[2]s"
   domain     = mailcow_domain.domain.id
   password   = "secret-password"
+  full_name  = "%[2]s"
 }
 
 data "mailcow_mailbox" "mailbox" {
   address = mailcow_mailbox.mailbox.address
 }
 `, domain, localPart)
+}
+
+func testAccDataSourceMailboxError() string {
+	return fmt.Sprintf(`
+data "mailcow_mailbox" "mailbox" {
+  address = "xyzzy"
+}
+`)
 }

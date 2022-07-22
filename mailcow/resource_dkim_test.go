@@ -2,6 +2,7 @@ package mailcow
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -22,6 +23,10 @@ func TestAccResourceDkim(t *testing.T) {
 					resource.TestCheckResourceAttr("mailcow_dkim.dkim", "id", domain),
 				),
 			},
+			{
+				Config:      testAccResourceDkimCreateError("xyzzy", length),
+				ExpectError: regexp.MustCompile("danger"),
+			},
 		},
 	})
 }
@@ -34,6 +39,15 @@ resource "mailcow_domain" "domain" {
 
 resource "mailcow_dkim" "dkim" {
   domain = mailcow_domain.domain.id
+  length = %[2]d
+}
+`, domain, length)
+}
+
+func testAccResourceDkimCreateError(domain string, length int) string {
+	return fmt.Sprintf(`
+resource "mailcow_dkim" "error" {
+  domain = "%[1]s"
   length = %[2]d
 }
 `, domain, length)

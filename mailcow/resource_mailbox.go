@@ -46,7 +46,7 @@ func resourceMailbox() *schema.Resource {
 			"full_name": {
 				Type:        schema.TypeString,
 				Description: "Full name of the mailbox user",
-				Optional:    true,
+				Required:    true,
 			},
 			"password": {
 				Type:        schema.TypeString,
@@ -194,6 +194,7 @@ func resourceMailboxRead(ctx context.Context, d *schema.ResourceData, m interfac
 		return diag.FromErr(err)
 	}
 
+	mailbox["full_name"] = mailbox["name"]
 	for _, argument := range []string{
 		"domain",
 		"local_part",
