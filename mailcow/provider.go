@@ -33,8 +33,9 @@ func Provider() *schema.Provider {
 			"mailcow_dkim":    resourceDkim(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"mailcow_domain": dataSourceDomain(),
-			"mailcow_dkim":   dataSourceDkim(),
+			"mailcow_domain":  dataSourceDomain(),
+			"mailcow_mailbox": dataSourceMailbox(),
+			"mailcow_dkim":    dataSourceDkim(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
