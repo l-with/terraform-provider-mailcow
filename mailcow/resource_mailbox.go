@@ -147,8 +147,13 @@ func resourceMailboxCreate(ctx context.Context, d *schema.ResourceData, m interf
 	createMailboxRequest.SetSmtpAccess(d.Get("smtp_access").(bool))
 	createMailboxRequest.SetSieveAccess(d.Get("sieve_access").(bool))
 
+	address := localPart + "@" + domain
 	request := c.client.MailboxesApi.CreateMailbox(ctx).CreateMailboxRequest(*createMailboxRequest)
-	_, _, err := c.client.MailboxesApi.CreateMailboxExecute(request)
+	response, _, err := c.client.MailboxesApi.CreateMailboxExecute(request)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	err = checkResponse(response, resourceMailboxCreate, address)
 	if err != nil {
 		return diag.FromErr(err)
 	}

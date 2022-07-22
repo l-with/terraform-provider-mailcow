@@ -158,7 +158,15 @@ func resourceDomainCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	createDomainRequest.SetTags(tags)
 
 	request := c.client.DomainsApi.CreateDomain(ctx).CreateDomainRequest(*createDomainRequest)
-	_, _, err := c.client.DomainsApi.CreateDomainExecute(request)
+	response, _, err := c.client.DomainsApi.CreateDomainExecute(request)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	err = checkResponse(
+		response,
+		resourceDomainCreate,
+		d.Get("domain").(string),
+	)
 	if err != nil {
 		return diag.FromErr(err)
 	}

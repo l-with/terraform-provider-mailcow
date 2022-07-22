@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	api "github.com/l-with/mailcow-go"
 	"io"
+	"reflect"
 )
 
 func resourceAlias() *schema.Resource {
@@ -96,21 +97,36 @@ func resourceAliasCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 
 	request := c.client.AliasesApi.CreateAlias(ctx).CreateAliasRequest(*createAliasRequest)
-	createAliasResponse, _, err := c.client.AliasesApi.CreateAliasExecute(request)
+	response, _, err := c.client.AliasesApi.CreateAliasExecute(request)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	responseMsg := createAliasResponse[0].GetMsg()
-	responseType := createAliasResponse[0].GetType()
-	err = ckeckResponse(responseType, responseMsg)
+	err = checkResponse(response, resourceAliasCreate, d.Get("address").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.SetId(responseMsg[2].(string))
+	err, id := getAliasId(response)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(id.(string))
 
 	return diags
+}
+
+func getAliasId(response []map[string]interface{}) (error, interface{}) {
+	responseMsg := response[len(response)-1]["msg"]
+	if reflect.ValueOf(responseMsg).Kind() == reflect.String {
+		return errors.New(fmt.Sprint("msg error: ", responseMsg.(string))), nil
+	}
+	receipt := responseMsg.([]interface{})[0].(string)
+	if receipt != "alias_added" {
+		return errors.New(fmt.Sprint("msg error: ", receipt)), nil
+	}
+	return nil, responseMsg.([]interface{})[2].(string)
 }
 
 func resourceAliasRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -256,14 +272,9 @@ func resourceAliasDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if response[len(response)-1]["type"].(string) != "success" {
-		return diag.FromErr(errors.New(fmt.Sprintf(
-			"resourceAliasDelete %s (id: %s): %s - %s",
-			d.Get("address").(string),
-			d.Id(),
-			response[0]["type"].(string),
-			response[0]["msg"].(string))),
-		)
+	err = checkResponse(response, resourceDomainDelete, d.Get("address").(string)+" "+d.Id())
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")
