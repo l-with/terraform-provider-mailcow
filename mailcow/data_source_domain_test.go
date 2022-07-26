@@ -17,9 +17,15 @@ func TestAccDataSourceDomain(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourceDomainSimple(domain),
+				Config: testAccDataSourceDomainSimple(),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("data.mailcow_domain.demo", "domain_name", domain),
+					resource.TestCheckResourceAttr("data.mailcow_domain.simple", "description", "demo domain"),
+				),
+			},
+			{
+				Config: testAccDataSourceDomain(domain),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("data.mailcow_domain.demo", "description", "description"),
 				),
 			},
 			{
@@ -30,14 +36,23 @@ func TestAccDataSourceDomain(t *testing.T) {
 	})
 }
 
-func testAccDataSourceDomainSimple(domain string) string {
+func testAccDataSourceDomainSimple() string {
+	return fmt.Sprintf(`
+data "mailcow_domain" "simple" {
+  domain = "440044.xyz"
+}
+`)
+}
+
+func testAccDataSourceDomain(domain string) string {
 	return fmt.Sprintf(`
 resource "mailcow_domain" "domain" {
   domain = "%[1]s"
+  description = "description"
 }
 
 data "mailcow_domain" "demo" {
-  domain_name = mailcow_domain.domain.domain
+  domain = mailcow_domain.domain.domain
 }
 `, domain)
 }
@@ -45,7 +60,7 @@ data "mailcow_domain" "demo" {
 func testAccDataSourceDomainError() string {
 	return fmt.Sprintf(`
 data "mailcow_domain" "error" {
-  domain_name = "xyzzy"
+  domain = "xyzzy"
 }
 `)
 }

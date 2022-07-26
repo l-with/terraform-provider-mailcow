@@ -2,13 +2,11 @@ package mailcow
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	api "github.com/l-with/mailcow-go"
-	"io"
-	"log"
+	"github.com/l-with/terraform-provider-mailcow/api"
 	"reflect"
 	"strconv"
 )
@@ -80,12 +78,6 @@ func resourceDomain() *schema.Resource {
 				Default:     10240,
 				Optional:    true,
 			},
-			"restart_sogo": {
-				Type:        schema.TypeBool,
-				Description: "restart SOGo to activate the domain in SOGo",
-				Default:     true,
-				Optional:    true,
-			},
 			"relay_all_recipients": {
 				Type:        schema.TypeBool,
 				Description: "if not, them you have to create \"dummy\" mailbox for each address to relay",
@@ -104,171 +96,66 @@ func resourceDomain() *schema.Resource {
 				Default:     "10s",
 				Optional:    true,
 			},
-			"tags": {
-				Type:     schema.TypeList,
-				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-			},
 		},
 	}
 }
 
 func resourceDomainCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
 	c := m.(*APIClient)
 
-	createDomainRequest := api.NewCreateDomainRequest()
-	createDomainRequest.SetActive(d.Get("active").(bool))
-	createDomainRequest.SetAliases(float32(d.Get("aliases").(int)))
-	createDomainRequest.SetBackupmx(d.Get("backupmx").(bool))
-	createDomainRequest.SetDefquota(float32(d.Get("defquota").(int)))
-	createDomainRequest.SetDescription(d.Get("description").(string))
-	createDomainRequest.SetDomain(d.Get("domain").(string))
-	createDomainRequest.SetMailboxes(float32(d.Get("mailboxes").(int)))
-	createDomainRequest.SetMaxquota(float32(d.Get("maxquota").(int)))
-	createDomainRequest.SetQuota(float32(d.Get("quota").(int)))
-	restStartSogo := d.Get("restart_sogo").(bool)
-	if restStartSogo {
-		createDomainRequest.SetRestartSogo(1.0)
-	} else {
-		createDomainRequest.SetRestartSogo(0.0)
+	mailcowCreateRequest := api.NewCreateDomainRequest()
 
-	}
-	createDomainRequest.SetRelayAllRecipients(d.Get("relay_all_recipients").(bool))
-	createDomainRequest.SetRelayUnknownOnly(d.Get("relay_unknown_only").(bool))
-	iRateLimit, ok := d.GetOk("rate_limit")
+	exclude := []string{"rate_limit"}
+	value, ok := d.GetOk("rate_limit")
 	if ok {
-		rateLimit := iRateLimit.(string)
+		rateLimit := value.(string)
 		rateFrame := rateLimit[len(rateLimit)-1:]
-		createDomainRequest.SetRlFrame(rateFrame)
+		mailcowCreateRequest.Set("rl_frame", rateFrame)
 		rateValue, err := strconv.Atoi(rateLimit[0 : len(rateLimit)-1])
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		createDomainRequest.SetRlValue(float32(rateValue))
-	}
-	tagsInterface := d.Get("tags").([]interface{})
-	numTags := len(tagsInterface)
-	tags := make([]string, numTags)
-	for i, tag := range tagsInterface {
-		tags[i] = tag.(string)
-	}
-	createDomainRequest.SetTags(tags)
+		mailcowCreateRequest.Set("rl_value", float32(rateValue))
 
-	request := c.client.DomainsApi.CreateDomain(ctx).CreateDomainRequest(*createDomainRequest)
-	response, _, err := c.client.DomainsApi.CreateDomainExecute(request)
-	if err != nil {
-		return diag.FromErr(err)
 	}
-	err = checkResponse(response, resourceDomainCreate, d.Get("domain").(string))
+	createRequestSet(mailcowCreateRequest, resourceDomain(), d, &exclude, nil)
+
+	domain := d.Get("domain").(string)
+	err := mailcowCreate(ctx, resourceDomain(), d, domain, &exclude, nil, mailcowCreateRequest, c)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.SetId(d.Get("domain").(string))
+	d.SetId(domain)
 	return diags
 }
 
 func resourceDomainRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
 	c := m.(*APIClient)
-	domainName := d.Id()
+	id := d.Id()
 
-	request := c.client.DomainsApi.GetDomains(ctx, domainName)
+	request := c.client.Api.MailcowGetDomain(ctx, id)
 
-	response, err := request.Execute()
+	domain, err := readRequest(request)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			diag.FromErr(err)
-		}
-	}(response.Body)
-
-	log.Print("[TRACE] response.Body: ", response.Body)
-	domain := make(map[string]interface{}, 0)
-	err = json.NewDecoder(response.Body).Decode(&domain)
-	if err != nil {
-		return diag.FromErr(err)
+	if domain["domain_name"] == nil {
+		return diag.FromErr(errors.New("domain not found: " + id))
 	}
 
-	err = d.Set("aliases", domain["max_num_aliases_for_domain"])
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	domainDefNewMailboxQuota := domain["def_new_mailbox_quota"]
-	if domainDefNewMailboxQuota != nil {
-		err = d.Set("defquota", int(domainDefNewMailboxQuota.(float64))/(1024*1024))
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
-	err = d.Set("description", domain["description"])
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	err = d.Set("domain", domain["domain_name"])
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	err = d.Set("mailboxes", domain["max_num_mboxes_for_domain"])
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	domainMaxQuotaForMBox := domain["max_quota_for_mbox"]
-	if domainMaxQuotaForMBox != nil {
-		err = d.Set("maxquota", int(domainMaxQuotaForMBox.(float64))/(1024*1024))
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
-	domainMaxQuotaForDomain := domain["max_quota_for_domain"]
-	if domainMaxQuotaForDomain != nil {
-		err = d.Set("quota", int(domainMaxQuotaForDomain.(float64))/(1024*1024))
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
-	for _, argumentBool := range []string{
-		"active",
-		"backupmx",
-		"gal",
-		"restart_sogo",
-		"relay_all_recipients",
-		"relay_unknown_only",
-	} {
-		boolValue := false
-		domainArgumentBool := domain[argumentBool]
-		if domainArgumentBool != nil {
-			if domainArgumentBool.(float64) == 1 {
-				boolValue = true
-			}
-			err = d.Set(argumentBool, boolValue)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-		}
-	}
-
-	domainQuota := domain["quota"]
-	if domainQuota != nil {
-		quota, err := strconv.Atoi(fmt.Sprint(domainQuota))
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		err = d.Set("quota", quota)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
-
+	domain["aliases"] = domain["max_num_aliases_for_domain"]
+	domain["defquota"] = int(domain["def_new_mailbox_quota"].(float64)) / (1024 * 1024)
+	domain["domain"] = domain["domain_name"]
+	domain["maxquota"] = int(domain["max_quota_for_mbox"].(float64)) / (1024 * 1024)
+	domain["mailboxes"] = domain["max_num_mboxes_for_domain"]
+	domain["maxquota"] = int(domain["max_quota_for_mbox"].(float64)) / (1024 * 1024)
+	domain["quota"] = int(domain["max_quota_for_domain"].(float64)) / (1024 * 1024)
 	domainRl := domain["rl"]
 	if domainRl != nil {
 		if reflect.ValueOf(domainRl).Kind() != reflect.Bool {
@@ -277,38 +164,13 @@ func resourceDomainRead(ctx context.Context, d *schema.ResourceData, m interface
 			for _, key := range value.MapKeys() {
 				rl[fmt.Sprint(key)] = fmt.Sprint(value.MapIndex(key))
 			}
-			rateLimit := rl["value"] + rl["frame"]
-			err = d.Set("rate_limit", rateLimit)
-			if err != nil {
-				return diag.FromErr(err)
-			}
+			domain["rate_limit"] = rl["value"] + rl["frame"]
 		}
 	}
 
-	domainTags := domain["tags"]
-	log.Print("domainTags: ", domainTags)
-	if domainTags != nil {
-		numTags := len(domainTags.([]interface{}))
-		tags := make([]string, numTags)
-		for i, tag := range domainTags.([]interface{}) {
-			tags[i] = tag.(string)
-		}
-		err = d.Set("tags", tags)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
-	/*
-		else {
-			tags := make([]string, 0, 0)
-			err = d.Set("tags", tags)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-		}
-	*/
+	setResourceData(resourceDomain(), d, &domain, nil, nil)
 
-	d.SetId(domainName)
+	d.SetId(id)
 
 	return diags
 }
@@ -316,72 +178,24 @@ func resourceDomainRead(ctx context.Context, d *schema.ResourceData, m interface
 func resourceDomainUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*APIClient)
 
-	domain := d.Id()
+	mailcowUpdateRequest := api.NewUpdateDomainRequest()
 
-	updateDomainRequest := api.NewUpdateDomainRequest()
-	updateDomainRequestAttr := api.NewUpdateDomainRequestAttr()
-
-	if d.HasChange("aliases") {
-		updateDomainRequestAttr.SetAliases(float32(d.Get("aliases").(int)))
-	}
-	if d.HasChange("defquota") {
-		updateDomainRequestAttr.SetDefquota(float32(d.Get("defquota").(int)))
-	}
-	if d.HasChange("description") {
-		updateDomainRequestAttr.SetDescription(d.Get("description").(string))
-	}
-	if d.HasChange("mailboxes") {
-		updateDomainRequestAttr.SetMailboxes(float32(d.Get("mailboxes").(int)))
-	}
-	if d.HasChange("maxquota") {
-		updateDomainRequestAttr.SetMaxquota(float32(d.Get("maxquota").(int)))
-	}
-	if d.HasChange("quota") {
-		updateDomainRequestAttr.SetQuota(float32(d.Get("quota").(int)))
-	}
-	if d.HasChange("active") {
-		updateDomainRequestAttr.SetActive(d.Get("active").(bool))
-	}
-	if d.HasChange("backupmx") {
-		updateDomainRequestAttr.SetBackupmx(d.Get("backupmx").(bool))
-	}
-	if d.HasChange("gal") {
-		updateDomainRequestAttr.SetGal(d.Get("gal").(bool))
-	}
-	if d.HasChange("relay_all_recipients") {
-		updateDomainRequestAttr.SetRelayAllRecipients(d.Get("relay_all_recipients").(bool))
-	}
-	if d.HasChange("relay_unknown_only") {
-		updateDomainRequestAttr.SetRelayUnknownOnly(d.Get("relay_unknown_only").(bool))
-	}
 	if d.HasChange("rate_limit") {
 		iRateLimit := d.Get("rate_limit")
 		rateLimit := iRateLimit.(string)
 		rateFrame := rateLimit[len(rateLimit)-1:]
-		updateDomainRequestAttr.SetRlFrame(rateFrame)
+		mailcowUpdateRequest.SetAttr("rl_frame", rateFrame)
 		rateValue, err := strconv.Atoi(rateLimit[0 : len(rateLimit)-1])
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		updateDomainRequestAttr.SetRlValue(float32(rateValue))
-	}
-	if d.HasChange("tags") {
-		tagsInterface := d.Get("tags").([]interface{})
-		numTags := len(tagsInterface)
-		tags := make([]string, numTags)
-		for i, tag := range tagsInterface {
-			tags[i] = tag.(string)
-		}
-		updateDomainRequestAttr.SetTags(tags)
+		mailcowUpdateRequest.SetAttr("rl_value", float32(rateValue))
 	}
 
-	items := make([]string, 1)
-	items[0] = domain
-
-	updateDomainRequest.SetItems(items)
-	updateDomainRequest.SetAttr(*updateDomainRequestAttr)
-	request := c.client.DomainsApi.UpdateDomain(ctx).UpdateDomainRequest(*updateDomainRequest)
-	_, _, err := c.client.DomainsApi.UpdateDomainExecute(request)
+	updateExclude := []string{
+		"rate_limit",
+	}
+	err := mailcowUpdate(ctx, resourceDomain(), d, &updateExclude, nil, mailcowUpdateRequest, c)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -390,24 +204,8 @@ func resourceDomainUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 }
 
 func resourceDomainDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
-
 	c := m.(*APIClient)
-
-	deleteDomainRequest := api.NewDeleteDomainRequest()
-
-	items := make([]string, 1)
-	items[0] = d.Id()
-	deleteDomainRequest.SetItems(items)
-
-	request := c.client.DomainsApi.DeleteDomain(ctx).DeleteDomainRequest(*deleteDomainRequest)
-	_, _, err := c.client.DomainsApi.DeleteDomainExecute(request)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.SetId("")
-
+	mailcowDeleteRequest := api.NewDeleteDomainRequest()
+	diags, _ := mailcowDelete(ctx, d, mailcowDeleteRequest, c)
 	return diags
 }

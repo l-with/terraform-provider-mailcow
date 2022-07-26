@@ -35,17 +35,17 @@ func TestAccDataSourceDkim(t *testing.T) {
 
 func testAccDataSourceDkimSimple(domain string, length int) string {
 	return fmt.Sprintf(`
-resource "mailcow_domain" "domain" {
+resource "mailcow_domain" "domain-dkim-ds" {
   domain = "%[1]s"
 }
 
-resource "mailcow_dkim" "dkim" {
-  domain = mailcow_domain.domain.domain
+resource "mailcow_dkim" "dkim-ds" {
+  domain = mailcow_domain.domain-dkim-ds.domain
   length = %[2]d
 }
 
 data "mailcow_dkim" "demo" {
-  domain = mailcow_dkim.dkim.domain
+  domain = mailcow_dkim.dkim-ds.domain
 }
 `, domain, length)
 }

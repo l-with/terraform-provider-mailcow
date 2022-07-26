@@ -2,11 +2,10 @@ package mailcow
 
 import (
 	"context"
+	"github.com/l-with/terraform-provider-mailcow/api"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-	mailcow "github.com/l-with/mailcow-go"
 )
 
 func Provider() *schema.Provider {
@@ -44,14 +43,14 @@ func Provider() *schema.Provider {
 
 // APIClient Hold the API Client and any relevant configuration
 type APIClient struct {
-	client *mailcow.APIClient
+	client *api.APIClient
 }
 
 func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	hostName := d.Get("host_name").(string)
 	apiKey := d.Get("api_key").(string)
 
-	config := mailcow.NewConfiguration()
+	config := api.NewConfiguration()
 
 	config.UserAgent = "terraform-provider-mailcow"
 	config.Host = hostName
@@ -63,7 +62,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	apiClient := mailcow.NewAPIClient(config)
+	apiClient := api.NewAPIClient(config)
 
 	return &APIClient{
 		client: apiClient,
