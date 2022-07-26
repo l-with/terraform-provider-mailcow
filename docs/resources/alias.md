@@ -24,13 +24,11 @@ resource "mailcow_alias" "demo" {
 
 - `address` (String) alias address, for catchall use "@domain.tld"
 - `goto` (String) destination address, comma separated
+Special values are spam@locahost,
 
 ### Optional
 
 - `active` (Boolean) is alias active or not
-- `goto_ham` (Boolean) learn as ham
-- `goto_null` (Boolean) silently ignore
-- `goto_spam` (Boolean) learn as spam
 - `private_comment` (String) private comment
 - `public_comment` (String) public comment
 - `sogo_visible` (Boolean) visibility as selectable sender in SOGo

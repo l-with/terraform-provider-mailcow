@@ -20,7 +20,7 @@ data "mailcow_domain" "demo" {
 
 ### Required
 
-- `domain_name` (String)
+- `domain` (String) Fully qualified domain name
 
 ### Optional
 
@@ -29,26 +29,22 @@ data "mailcow_domain" "demo" {
 ### Read-Only
 
 - `active` (Boolean)
-- `aliases_in_domain` (Number)
+- `aliases` (Number) limit count of aliases associated with this domain
 - `aliases_left` (Number)
 - `backupmx` (Boolean)
 - `bytes_total` (Number)
-- `def_new_mailbox_quota` (Number)
-- `def_quota_for_mbox` (Number)
-- `description` (String)
+- `defquota` (Number) predefined mailbox quota in add mailbox form
+- `description` (String) Description of domain
 - `domain_admins` (String)
-- `gal` (Boolean)
+- `gal` (Boolean) is domain global address list active or not, it enables shared contacts accross domain in SOGo webmail
 - `id` (String) The ID of this resource.
-- `max_new_mailbox_quota` (Number)
-- `max_num_aliases_for_domain` (Number)
-- `max_num_mboxes_for_domain` (Number)
-- `max_quota_for_domain` (Number)
-- `max_quota_for_mbox` (Number)
+- `mailboxes` (Number) limit count of mailboxes associated with this domain
+- `maxquota` (Number) maximum quota per mailbox
 - `mboxes_in_domain` (Number)
 - `mboxes_left` (Number)
 - `msgs_total` (Number)
+- `quota` (Number) maximum quota for this domain (for all mailboxes in sum)
 - `quota_used_in_domain` (Number)
 - `rate_limit` (String)
-- `relay_all_recipients` (Boolean)
-- `relay_unknown_only` (Boolean)
-- `relayhost` (String)
+- `relay_all_recipients` (Boolean) if not, them you have to create "dummy" mailbox for each address to relay
+- `relay_unknown_only` (Boolean) Relay non-existing mailboxes only. Existing mailboxes will be delivered locally.

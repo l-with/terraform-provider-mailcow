@@ -27,5 +27,5 @@ data "mailcow_dkim" "demo" {
 - `dkim_selector` (String)
 - `dkim_txt` (String)
 - `id` (String) The ID of this resource.
-- `length` (String)
+- `length` (Number)
 - `pubkey` (String)

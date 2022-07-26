@@ -37,8 +37,6 @@ resource "mailcow_domain" "demo" {
 - `rate_limit` (String) rate limit, decimal with unit s,m,h,d
 - `relay_all_recipients` (Boolean) if not, them you have to create "dummy" mailbox for each address to relay
 - `relay_unknown_only` (Boolean) Relay non-existing mailboxes only. Existing mailboxes will be delivered locally.
-- `restart_sogo` (Boolean) restart SOGo to activate the domain in SOGo
-- `tags` (List of String)
 
 ### Read-Only
 
