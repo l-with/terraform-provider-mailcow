@@ -11,7 +11,7 @@ import (
 func TestAccResourceMailbox(t *testing.T) {
 	domain := "domain-with4mailbox-test-440044.xyz"
 	localPart := "localpart-with4mailbox-test"
-	fullName := "full name"
+	fullName := "new full name"
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -20,12 +20,15 @@ func TestAccResourceMailbox(t *testing.T) {
 				Config: testAccResourceMailbox(domain, localPart),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("mailcow_mailbox.mailbox", "address", localPart+"@"+domain),
+					resource.TestCheckResourceAttr("mailcow_mailbox.mailbox", "tls_enforce_out", "true"),
 				),
 			},
 			{
 				Config: testAccResourceMailboxUpdate(domain, localPart, fullName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("mailcow_mailbox.mailbox", "full_name", fullName),
+					resource.TestCheckResourceAttr("mailcow_mailbox.mailbox", "tls_enforce_out", "true"),
+					resource.TestCheckResourceAttr("mailcow_mailbox.mailbox", "quota", "42"),
 				),
 			},
 			{
@@ -43,10 +46,11 @@ resource "mailcow_domain" "domain" {
 }
 
 resource "mailcow_mailbox" "mailbox" {
-  local_part = "%[2]s"
-  domain     = mailcow_domain.domain.id
-  password   = "secret-password"
-  full_name  = "%[2]s"
+  local_part      = "%[2]s"
+  domain          = mailcow_domain.domain.id
+  password        = "secret-password"
+  full_name       = "initial full name"
+  tls_enforce_out = true
 }
 `, domain, localPart)
 }
@@ -58,10 +62,12 @@ resource "mailcow_domain" "domain" {
 }
 
 resource "mailcow_mailbox" "mailbox" {
-  local_part = "%[2]s"
-  domain     = mailcow_domain.domain.id
-  password   = "secret-password"
-  full_name  = "%[3]s"
+  local_part      = "%[2]s"
+  domain          = mailcow_domain.domain.id
+  password        = "secret-password"
+  full_name       = "%[3]s"
+  tls_enforce_out = true
+  quota           = 42
 }
 `, domain, localPart, fullName)
 }

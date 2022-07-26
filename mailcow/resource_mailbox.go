@@ -2,15 +2,9 @@ package mailcow
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
-	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	api "github.com/l-with/mailcow-go"
-	"io"
-	"log"
-	"reflect"
+	"github.com/l-with/terraform-provider-mailcow/api"
 )
 
 func resourceMailbox() *schema.Resource {
@@ -116,155 +110,86 @@ func resourceMailbox() *schema.Resource {
 	}
 }
 
+func isMailboxAttribute(argument string) bool {
+	mailboxAttributes := []string{
+		"force_pw_update",
+		"tls_enforce_in",
+		"tls_enforce_out",
+		"sogo_access",
+		"imap_access",
+		"pop3_access",
+		"smtp_access",
+		"sieve_access",
+	}
+	for _, attribute := range mailboxAttributes {
+		if argument == attribute {
+			return true
+		}
+	}
+	return false
+}
+
 func resourceMailboxCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
 	c := m.(*APIClient)
 
-	createMailboxRequest := api.NewCreateMailboxRequest()
-	createMailboxRequest.SetActive(d.Get("active").(bool))
-	domain := d.Get("domain").(string)
-	createMailboxRequest.SetDomain(domain)
-	localPart := d.Get("local_part").(string)
-	createMailboxRequest.SetLocalPart(localPart)
-	name, ok := d.GetOk("full_name")
-	if ok {
-		createMailboxRequest.SetName(name.(string))
-	}
-	createMailboxRequest.SetPassword(d.Get("password").(string))
-	createMailboxRequest.SetPassword2(d.Get("password").(string))
-	quota, ok := d.GetOk("quota")
-	if ok {
-		createMailboxRequest.SetQuota(float32(quota.(int)))
-	}
-	createMailboxRequest.SetForcePwUpdate(d.Get("force_pw_update").(bool))
-	createMailboxRequest.SetTlsEnforceOut(d.Get("tls_enforce_out").(bool))
-	createMailboxRequest.SetTlsEnforceIn(d.Get("tls_enforce_in").(bool))
-	createMailboxRequest.SetSogoAccess(d.Get("sogo_access").(bool))
-	createMailboxRequest.SetImapAccess(d.Get("imap_access").(bool))
-	createMailboxRequest.SetPop3Access(d.Get("pop3_access").(bool))
-	createMailboxRequest.SetSmtpAccess(d.Get("smtp_access").(bool))
-	createMailboxRequest.SetSieveAccess(d.Get("sieve_access").(bool))
+	mailcowCreateRequest := api.NewCreateMailboxRequest()
 
-	address := localPart + "@" + domain
-	request := c.client.MailboxesApi.CreateMailbox(ctx).CreateMailboxRequest(*createMailboxRequest)
-	response, _, err := c.client.MailboxesApi.CreateMailboxExecute(request)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	err = checkResponse(response, resourceMailboxCreate, address)
+	address := d.Get("local_part").(string) + "@" + d.Get("domain").(string)
+	err := d.Set("address", address)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.SetId(localPart + "@" + domain)
-	err = d.Set("address", d.Id())
+	mailcowCreateRequest.Set("password2", d.Get("password"))
+
+	mapArguments := map[string]string{"full_name": "name"}
+
+	err = mailcowCreate(ctx, resourceMailbox(), d, address, nil, &mapArguments, mailcowCreateRequest, c)
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	d.SetId(address)
 
 	return diags
 }
 
 func resourceMailboxRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
 	c := m.(*APIClient)
-	emailAddress := d.Id()
+	id := d.Id()
 
-	request := c.client.MailboxesApi.GetMailboxes(ctx, emailAddress)
+	request := c.client.Api.MailcowGetMailbox(ctx, id)
 
-	response, err := request.Execute()
+	mailbox, err := readRequest(request)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			diag.FromErr(err)
-		}
-	}(response.Body)
-
-	mailbox := make(map[string]interface{}, 0)
-	err = json.NewDecoder(response.Body).Decode(&mailbox)
-	if err != nil {
-		return diag.FromErr(err)
+	exclude := []string{
+		"password",
 	}
-
+	mailboxAttributes := []string{
+		"force_pw_update",
+		"tls_enforce_in",
+		"tls_enforce_out",
+		"sogo_access",
+		"imap_access",
+		"pop3_access",
+		"smtp_access",
+		"sieve_access",
+	}
+	mailbox["address"] = id
 	mailbox["full_name"] = mailbox["name"]
-	for _, argument := range []string{
-		"domain",
-		"local_part",
-		"full_name",
-	} {
-		err = d.Set(argument, mailbox[argument])
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		log.Print("[TRACE] resourceMailboxRead mailbox[", argument, "]: ", mailbox[argument])
-	}
-	mailboxQuota := mailbox["quota"]
-	if mailboxQuota != nil {
-		err = d.Set("quota", int(mailboxQuota.(float64))/(1024*1024))
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
+	excludeAndAttributes := append(exclude, mailboxAttributes...)
+	setResourceData(resourceMailbox(), d, &mailbox, &excludeAndAttributes, nil)
+	attributes := mailbox["attributes"].(map[string]interface{})
+	setResourceData(resourceMailbox(), d, &attributes, &exclude, &mailboxAttributes)
 
-	for _, argumentBool := range []string{
-		"active",
-	} {
-		boolValue := false
-		if mailbox[argumentBool] != nil {
-			if int(mailbox[argumentBool].(float64)) >= 1 {
-				boolValue = true
-			}
-		}
-		err = d.Set(argumentBool, boolValue)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
-	attributes := mailbox["attributes"]
-	if attributes != nil {
-		value := reflect.ValueOf(attributes)
-		for _, argument := range []string{
-			"force_pw_update",
-			"tls_enforce_in",
-			"tls_enforce_out",
-			"sogo_access",
-			"imap_access",
-			"pop3_access",
-			"smtp_access",
-			"sieve_access",
-		} {
-			boolValue := false
-			if fmt.Sprint(value.MapIndex(reflect.ValueOf(argument))) == "1" {
-				boolValue = true
-			}
-			err = d.Set(argument, boolValue)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-		}
-		//for _, key := range value.MapKeys() {
-		//	boolValue := false
-		//	stringValue := fmt.Sprint(value.MapIndex(key))
-		//	if stringValue == "1" {
-		//		boolValue = true
-		//	}
-		//	err = d.Set(fmt.Sprint(key), boolValue)
-		//}
-	}
-
-	d.SetId(emailAddress)
-	err = d.Set("address", emailAddress)
-	if err != nil {
-		return diag.FromErr(err)
-	}
+	d.SetId(id)
 
 	return diags
 }
@@ -272,32 +197,15 @@ func resourceMailboxRead(ctx context.Context, d *schema.ResourceData, m interfac
 func resourceMailboxUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*APIClient)
 
-	emailAddress := d.Id()
+	mailcowUpdateRequest := api.NewUpdateMailboxRequest()
 
-	updateMailboxRequest := api.NewUpdateMailboxRequest()
-	updateMailboxRequestAttr := api.NewUpdateMailboxRequestAttr()
-
-	if d.HasChange("active") {
-		updateMailboxRequestAttr.SetActive(d.Get("active").(bool))
+	exclude := []string{
+		"password",
 	}
-	log.Print("[TRACE] resourceMailboxUpdate d.Get(full_name): ", d.Get("full_name"))
-	if d.HasChange("full_name") {
-		updateMailboxRequestAttr.SetName(d.Get("full_name").(string))
+	mapArguments := map[string]string{
+		"full_name": "name",
 	}
-	if d.HasChange("quota") {
-		updateMailboxRequestAttr.SetQuota(float32(d.Get("quota").(int)))
-	}
-	if d.HasChange("sogo_access") {
-		updateMailboxRequestAttr.SetSogoAccess(d.Get("sogo_access").(bool))
-	}
-
-	items := make([]string, 1)
-	items[0] = emailAddress
-
-	updateMailboxRequest.SetItems(items)
-	updateMailboxRequest.SetAttr(*updateMailboxRequestAttr)
-	request := c.client.MailboxesApi.UpdateMailbox(ctx).UpdateMailboxRequest(*updateMailboxRequest)
-	_, _, err := c.client.MailboxesApi.UpdateMailboxExecute(request)
+	err := mailcowUpdate(ctx, resourceMailbox(), d, &exclude, &mapArguments, mailcowUpdateRequest, c)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -306,27 +214,8 @@ func resourceMailboxUpdate(ctx context.Context, d *schema.ResourceData, m interf
 }
 
 func resourceMailboxDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
-
 	c := m.(*APIClient)
-
-	deleteMailboxRequest := api.NewDeleteMailboxRequest()
-
-	items := make([]string, 1)
-	items[0] = d.Id()
-	deleteMailboxRequest.SetItems(items)
-
-	request := c.client.MailboxesApi.DeleteMailbox(ctx).DeleteMailboxRequest(*deleteMailboxRequest)
-	response, _, err := c.client.MailboxesApi.DeleteMailboxExecute(request)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if response[len(response)-1]["type"].(string) != "success" {
-		return diag.FromErr(errors.New(response[0]["type"].(string)))
-	}
-
-	d.SetId("")
-
+	mailcowDeleteRequest := api.NewDeleteMailboxRequest()
+	diags, _ := mailcowDelete(ctx, d, mailcowDeleteRequest, c)
 	return diags
 }

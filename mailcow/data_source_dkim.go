@@ -2,12 +2,10 @@ package mailcow
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"io"
 )
 
 func dataSourceDkim() *schema.Resource {
@@ -23,7 +21,7 @@ func dataSourceDkim() *schema.Resource {
 				Computed: true,
 			},
 			"length": {
-				Type:     schema.TypeString,
+				Type:     schema.TypeInt,
 				Computed: true,
 			},
 			"dkim_txt": {
@@ -48,22 +46,9 @@ func dataSourceDkimRead(ctx context.Context, d *schema.ResourceData, m interface
 	c := m.(*APIClient)
 	domain := d.Get("domain").(string)
 
-	request := c.client.DKIMApi.GetDKIMKey(ctx, domain)
+	request := c.client.Api.MailcowGetDkim(ctx, domain)
 
-	response, err := request.Execute()
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			diag.FromErr(err)
-		}
-	}(response.Body)
-
-	dkim := make(map[string]interface{}, 0)
-	err = json.NewDecoder(response.Body).Decode(&dkim)
+	dkim, err := readRequest(request)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -72,19 +57,11 @@ func dataSourceDkimRead(ctx context.Context, d *schema.ResourceData, m interface
 		return diag.FromErr(errors.New(fmt.Sprint("dkim for domain '", domain, "' not found")))
 	}
 
-	for _, argument := range []string{
-		"pubkey",
-		"length",
-		"dkim_txt",
-		"dkim_selector",
-		//"privkey",
-	} {
-		dkimArgument := dkim[argument]
-		if dkimArgument != nil {
-			err = d.Set(argument, dkimArgument)
-			if err != nil {
-				return diag.FromErr(err)
-			}
+	dkim["domain"] = domain
+	for key, elem := range dataSourceDkim().Schema {
+		err = resourceDataSet(d, key, dkim[key], elem)
+		if err != nil {
+			return diag.FromErr(err)
 		}
 	}
 

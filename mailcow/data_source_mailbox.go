@@ -2,14 +2,10 @@ package mailcow
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"io"
-	"log"
-	"reflect"
 )
 
 func dataSourceMailbox() *schema.Resource {
@@ -96,101 +92,40 @@ func dataSourceMailbox() *schema.Resource {
 }
 
 func dataSourceMailboxRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 	c := m.(*APIClient)
-	emailAddress := d.Get("address").(string)
+	id := d.Get("address").(string)
 
-	request := c.client.MailboxesApi.GetMailboxes(ctx, emailAddress)
+	request := c.client.Api.MailcowGetMailbox(ctx, id)
 
-	response, err := request.Execute()
+	mailbox, err := readRequest(request)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			diag.FromErr(err)
-		}
-	}(response.Body)
-
-	mailbox := make(map[string]interface{}, 0)
-	err = json.NewDecoder(response.Body).Decode(&mailbox)
-	if err != nil {
-		return diag.FromErr(err)
+	if mailboxAddress(mailbox) != id {
+		return diag.FromErr(errors.New(fmt.Sprint("mailbox '", id, "' not found")))
 	}
 
-	if mailboxAddress(mailbox) != emailAddress {
-		return diag.FromErr(errors.New(fmt.Sprint("mailbox '", emailAddress, "' not found")))
+	exclude := []string{"password"}
+	mailboxAttributes := []string{
+		"force_pw_update",
+		"tls_enforce_in",
+		"tls_enforce_out",
+		"sogo_access",
+		"imap_access",
+		"pop3_access",
+		"smtp_access",
+		"sieve_access",
 	}
+	mailbox["address"] = id
+	mailbox["full_name"] = mailbox["name"]
+	excludeAndAttributes := append(exclude, mailboxAttributes...)
+	setResourceData(resourceMailbox(), d, &mailbox, &excludeAndAttributes, nil)
+	attributes := mailbox["attributes"].(map[string]interface{})
+	setResourceData(resourceMailbox(), d, &attributes, &exclude, &mailboxAttributes)
 
-	for _, argument := range []string{
-		"domain",
-		"local_part",
-		"full_name",
-	} {
-		err = d.Set(argument, mailbox[argument])
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		log.Print("[TRACE] resourceMailboxRead mailbox[", argument, "]: ", mailbox[argument])
-	}
-	mailboxQuota := mailbox["quota"]
-	if mailboxQuota != nil {
-		err = d.Set("quota", int(mailboxQuota.(float64))/(1024*1024))
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
-
-	for _, argumentBool := range []string{
-		"active",
-	} {
-		boolValue := false
-		if mailbox[argumentBool] != nil {
-			if int(mailbox[argumentBool].(float64)) >= 1 {
-				boolValue = true
-			}
-		}
-		err = d.Set(argumentBool, boolValue)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
-	attributes := mailbox["attributes"]
-	if attributes != nil {
-		value := reflect.ValueOf(attributes)
-		for _, argument := range []string{
-			"force_pw_update",
-			"tls_enforce_in",
-			"tls_enforce_out",
-			"sogo_access",
-			"imap_access",
-			"pop3_access",
-			"smtp_access",
-			"sieve_access",
-		} {
-			boolValue := false
-			if fmt.Sprint(value.MapIndex(reflect.ValueOf(argument))) == "1" {
-				boolValue = true
-			}
-			err = d.Set(argument, boolValue)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-		}
-		//for _, key := range value.MapKeys() {
-		//	boolValue := false
-		//	stringValue := fmt.Sprint(value.MapIndex(key))
-		//	if stringValue == "1" {
-		//		boolValue = true
-		//	}
-		//	err = d.Set(fmt.Sprint(key), boolValue)
-		//}
-	}
-
-	d.SetId(emailAddress)
+	d.SetId(id)
 
 	return diags
 }

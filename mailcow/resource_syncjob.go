@@ -7,10 +7,8 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	api "github.com/l-with/mailcow-go"
-	"io"
+	"github.com/l-with/terraform-provider-mailcow/api"
 	"log"
-	"strconv"
 )
 
 func resourceSyncjob() *schema.Resource {
@@ -154,53 +152,31 @@ func resourceSyncjob() *schema.Resource {
 }
 
 func resourceSyncjobCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
 	c := m.(*APIClient)
 
-	createSyncjobRequest := api.NewCreateSyncJobRequest()
-	createSyncjobRequest.SetActive(d.Get("active").(bool))
-	createSyncjobRequest.SetMinsInterval(float32(d.Get("mins_interval").(int)))
-	createSyncjobRequest.SetAutomap(d.Get("automap").(bool))
-	createSyncjobRequest.SetCustomParams(d.Get("custom_params").(string))
-	createSyncjobRequest.SetDelete1(d.Get("delete1").(bool))
-	createSyncjobRequest.SetDelete2(d.Get("delete2").(bool))
-	createSyncjobRequest.SetDelete2duplicates(d.Get("delete2duplicates").(bool))
-	createSyncjobRequest.SetExclude(d.Get("exclude").(string))
-	createSyncjobRequest.SetMaxage(float32(d.Get("maxage").(int)))
-	maxBytesPerSecondNumber, err := strconv.Atoi(d.Get("maxbytespersecond").(string))
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	createSyncjobRequest.SetMaxbytespersecond(float32(maxBytesPerSecondNumber))
-	createSyncjobRequest.SetSkipcrossduplicates(d.Get("skipcrossduplicates").(bool))
-	createSyncjobRequest.SetSubscribeall(d.Get("subscribeall").(bool))
-	createSyncjobRequest.SetSubfolder2(d.Get("subfolder2").(string))
-	createSyncjobRequest.SetTimeout2(float32(d.Get("timeout2").(int)))
-	createSyncjobRequest.SetEnc1(d.Get("enc1").(string))
-	createSyncjobRequest.SetHost1(d.Get("host1").(string))
-	createSyncjobRequest.SetPassword1(d.Get("password1").(string))
-	createSyncjobRequest.SetPort1(float32(d.Get("port1").(int)))
-	createSyncjobRequest.SetTimeout1(float32(d.Get("timeout1").(int)))
-	createSyncjobRequest.SetUser1(d.Get("user1").(string))
-	createSyncjobRequest.SetUsername(d.Get("username").(string))
+	mailcowCreateRequest := api.NewCreateSyncjobRequest()
+
+	log.Print("[TRACE] resourceSyncjobCreate delete1: ", d.Get("delete1"))
+	createRequestSet(mailcowCreateRequest, resourceSyncjob(), d, nil, nil)
 
 	username := d.Get("username").(string)
 	user1 := d.Get("user1").(string)
-	request := c.client.SyncJobsApi.CreateSyncJob(ctx).CreateSyncJobRequest(*createSyncjobRequest)
-	response, _, err := c.client.SyncJobsApi.CreateSyncJobExecute(request)
+
+	request := c.client.Api.MailcowCreate(ctx).MailcowCreateRequest(*mailcowCreateRequest)
+	response, _, err := c.client.Api.MailcowCreateExecute(request)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = checkResponse(response, resourceSyncjobCreate, username+"=>"+user1)
+	err = checkResponse(response, "resourceSyncjobCreate", username+"=>"+user1)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	diags, syncJob := getSyncJob(ctx, c, username, "user1", d.Get("user1").(string))
+	syncJob, err := getSyncJob(ctx, c, username, "user1", d.Get("user1").(string))
 	if syncJob == nil {
-		return diags
+		return diag.FromErr(err)
 	}
 
 	d.SetId(fmt.Sprint(syncJob["id"].(float64)))
@@ -217,9 +193,9 @@ func resourceSyncjobRead(ctx context.Context, d *schema.ResourceData, m interfac
 	id := d.Id()
 	emailAddress := d.Get("username").(string)
 
-	diags, syncJob := getSyncJob(ctx, c, emailAddress, "id", id)
+	syncJob, err := getSyncJob(ctx, c, emailAddress, "id", id)
 	if syncJob == nil {
-		return diags
+		return diag.FromErr(err)
 	}
 
 	syncJob["username"] = syncJob["user2"]
@@ -271,25 +247,20 @@ func resourceSyncjobRead(ctx context.Context, d *schema.ResourceData, m interfac
 	return diags
 }
 
-func getSyncJob(ctx context.Context, c *APIClient, emailAddress string, attributeKey string, attributeValue string) (diag.Diagnostics, map[string]interface{}) {
-	request := c.client.SyncJobsApi.GetSyncJobs(ctx, emailAddress)
+func getSyncJob(ctx context.Context, c *APIClient, emailAddress string, attributeKey string, attributeValue string) (map[string]interface{}, error) {
+	request := c.client.Api.MailcowGetSyncjob(ctx, emailAddress)
+	log.Print("[TRACE] getSyncJob emailAddress: ", emailAddress)
 
-	response, err := request.Execute()
+	response, err := request.MailcowExecute()
 	if err != nil {
-		return diag.FromErr(err), nil
+		return nil, err
 	}
 
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			diag.FromErr(err)
-		}
-	}(response.Body)
-
+	log.Print("[TRACE] getSyncJob response.Body: ", response.Body)
 	syncJobs := make([]map[string]interface{}, 0)
 	err = json.NewDecoder(response.Body).Decode(&syncJobs)
 	if err != nil {
-		return diag.FromErr(err), nil
+		return nil, err
 	}
 
 	var syncJob map[string]interface{} = nil
@@ -301,91 +272,17 @@ func getSyncJob(ctx context.Context, c *APIClient, emailAddress string, attribut
 		}
 	}
 	if syncJob == nil {
-		return diag.FromErr(errors.New(fmt.Sprintf("syncjob user2=%s and %s=%s not found", emailAddress, attributeKey, attributeValue))), nil
+		return nil, errors.New(fmt.Sprintf("syncjob user2=%s and %s=%s not found", emailAddress, attributeKey, attributeValue))
 	}
-	return nil, syncJob
+	return syncJob, nil
 }
 
 func resourceSyncjobUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*APIClient)
 
-	id := d.Id()
+	mailcowUpdateRequest := api.NewUpdateSyncjobRequest()
 
-	updateSyncjobRequest := api.NewUpdateSyncJobRequest()
-	updateSyncjobRequestAttr := api.NewUpdateSyncJobRequestAttr()
-
-	if d.HasChange("active") {
-		updateSyncjobRequestAttr.SetActive(d.Get("active").(bool))
-	}
-	if d.HasChange("mins_interval") {
-		updateSyncjobRequestAttr.SetMinsInterval(float32(d.Get("mins_interval").(int)))
-	}
-	if d.HasChange("automap") {
-		updateSyncjobRequestAttr.SetAutomap(d.Get("automap").(bool))
-	}
-	if d.HasChange("custom_params") {
-		updateSyncjobRequestAttr.SetCustomParams(d.Get("custom_params").(string))
-	}
-	if d.HasChange("delete1") {
-		updateSyncjobRequestAttr.SetDelete1(d.Get("delete1").(bool))
-	}
-	if d.HasChange("delete2") {
-		updateSyncjobRequestAttr.SetDelete2(d.Get("delete2").(bool))
-	}
-	if d.HasChange("delete2duplicates") {
-		updateSyncjobRequestAttr.SetDelete2duplicates(d.Get("delete2duplicates").(bool))
-	}
-	if d.HasChange("exclude") {
-		updateSyncjobRequestAttr.SetExclude(d.Get("exclude").(string))
-	}
-	if d.HasChange("maxage") {
-		updateSyncjobRequestAttr.SetMaxage(float32(d.Get("maxage").(int)))
-	}
-	if d.HasChange("maxbytespersecond") {
-		maxBytesPerSecondNumber, err := strconv.Atoi(d.Get("maxbytespersecond").(string))
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		updateSyncjobRequestAttr.SetMaxbytespersecond(float32(maxBytesPerSecondNumber))
-	}
-	if d.HasChange("skipcrossduplicates") {
-		updateSyncjobRequestAttr.SetSkipcrossduplicates(d.Get("skipcrossduplicates").(bool))
-	}
-	if d.HasChange("subscribeall") {
-		updateSyncjobRequestAttr.SetSubscribeall(d.Get("subscribeall").(bool))
-	}
-	if d.HasChange("subfolder2") {
-		updateSyncjobRequestAttr.SetSubfolder2(d.Get("subfolder2").(string))
-	}
-	if d.HasChange("timeout2") {
-		updateSyncjobRequestAttr.SetTimeout2(float32(d.Get("timeout2").(int)))
-	}
-	if d.HasChange("enc1") {
-		updateSyncjobRequestAttr.SetEnc1(d.Get("enc1").(string))
-	}
-	if d.HasChange("host1") {
-		updateSyncjobRequestAttr.SetHost1(d.Get("host1").(string))
-	}
-	if d.HasChange("password1") {
-		updateSyncjobRequestAttr.SetPassword1(d.Get("password1").(string))
-	}
-	if d.HasChange("port1") {
-		updateSyncjobRequestAttr.SetPort1(float32(d.Get("port1").(int)))
-	}
-	if d.HasChange("timeout1") {
-		updateSyncjobRequestAttr.SetTimeout1(float32(d.Get("timeout1").(int)))
-	}
-	if d.HasChange("user1") {
-		updateSyncjobRequestAttr.SetUser1(d.Get("user1").(string))
-	}
-
-	items := make([]string, 1)
-	items[0] = id
-
-	updateSyncjobRequest.SetItems(items)
-	updateSyncjobRequest.SetAttr(*updateSyncjobRequestAttr)
-	request := c.client.SyncJobsApi.UpdateSyncJob(ctx).UpdateSyncJobRequest(*updateSyncjobRequest)
-	_, _, err := c.client.SyncJobsApi.UpdateSyncJobExecute(request)
+	err := mailcowUpdate(ctx, resourceSyncjob(), d, nil, nil, mailcowUpdateRequest, c)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -394,27 +291,8 @@ func resourceSyncjobUpdate(ctx context.Context, d *schema.ResourceData, m interf
 }
 
 func resourceSyncjobDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
-
 	c := m.(*APIClient)
-
-	deleteSyncjobRequest := api.NewDeleteSyncJobRequest()
-
-	items := make([]string, 1)
-	items[0] = d.Id()
-	deleteSyncjobRequest.SetItems(items)
-
-	request := c.client.SyncJobsApi.DeleteSyncJob(ctx).DeleteSyncJobRequest(*deleteSyncjobRequest)
-	response, _, err := c.client.SyncJobsApi.DeleteSyncJobExecute(request)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if response[len(response)-1]["type"].(string) != "success" {
-		return diag.FromErr(errors.New(response[0]["type"].(string)))
-	}
-
-	d.SetId("")
-
+	mailcowDeleteRequest := api.NewDeleteSyncjobRequest()
+	diags, _ := mailcowDelete(ctx, d, mailcowDeleteRequest, c)
 	return diags
 }

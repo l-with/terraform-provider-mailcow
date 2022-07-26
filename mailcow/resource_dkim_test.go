@@ -21,6 +21,7 @@ func TestAccResourceDkim(t *testing.T) {
 					resource.TestCheckResourceAttr("mailcow_dkim.dkim", "dkim_selector", "dkim"),
 					resource.TestCheckResourceAttr("mailcow_dkim.dkim", "length", fmt.Sprint(length)),
 					resource.TestCheckResourceAttr("mailcow_dkim.dkim", "id", domain),
+					resource.TestMatchResourceAttr("mailcow_dkim.dkim", "dkim_txt", regexp.MustCompile("v=DKIM")),
 				),
 			},
 			{
@@ -33,12 +34,12 @@ func TestAccResourceDkim(t *testing.T) {
 
 func testAccResourceDkimSimple(domain string, length int) string {
 	return fmt.Sprintf(`
-resource "mailcow_domain" "domain" {
+resource "mailcow_domain" "domain-dkim" {
   domain = "%[1]s"
 }
 
 resource "mailcow_dkim" "dkim" {
-  domain = mailcow_domain.domain.id
+  domain = mailcow_domain.domain-dkim.id
   length = %[2]d
 }
 `, domain, length)

@@ -2,14 +2,9 @@ package mailcow
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	api "github.com/l-with/mailcow-go"
-	"io"
-	"reflect"
-	"strconv"
+	"github.com/l-with/terraform-provider-mailcow/api"
 )
 
 func resourceDkim() *schema.Resource {
@@ -52,113 +47,53 @@ func resourceDkim() *schema.Resource {
 }
 
 func resourceDkimCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
-	// var diags diag.Diagnostics
-
 	c := m.(*APIClient)
 
-	createDkimRequest := api.NewGenerateDKIMKeyRequest()
-	createDkimRequest.SetDomains(d.Get("domain").(string))
-	createDkimRequest.SetKeySize(float32(d.Get("length").(int)))
-	createDkimRequest.SetDkimSelector(d.Get("dkim_selector").(string))
+	mailcowCreateRequest := api.NewCreateDkimRequest()
 
-	request := c.client.DKIMApi.GenerateDKIMKey(ctx).GenerateDKIMKeyRequest(*createDkimRequest)
-	response, _, err := c.client.DKIMApi.GenerateDKIMKeyExecute(request)
-	if err != nil {
-		return diag.FromErr(err)
+	mapArguments := map[string]string{
+		"length": "key_size",
+		"domain": "domains",
 	}
-	err = checkResponse(response, resourceDkimCreate, d.Get("domain").(string))
+	domain := d.Get("domain").(string)
+	err := mailcowCreate(ctx, resourceDkim(), d, domain, nil, &mapArguments, mailcowCreateRequest, c)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.SetId(d.Get("domain").(string))
+	d.SetId(domain)
 
 	return resourceDkimRead(ctx, d, m)
 }
 
 func resourceDkimRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
 	c := m.(*APIClient)
-	domain := d.Id()
+	id := d.Id()
 
-	request := c.client.DKIMApi.GetDKIMKey(ctx, domain)
+	request := c.client.Api.MailcowGetDkim(ctx, id)
 
-	response, err := request.Execute()
+	dkim, err := readRequest(request)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			diag.FromErr(err)
-		}
-	}(response.Body)
+	dkim["domain"] = id
 
-	dkim := make(map[string]interface{}, 0)
-	err = json.NewDecoder(response.Body).Decode(&dkim)
+	err = setResourceData(resourceDkim(), d, &dkim, nil, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	for _, argument := range []string{
-		"pubkey",
-		"dkim_txt",
-		"dkim_selector",
-		//"privkey",
-	} {
-		dkimArgument := dkim[argument]
-		if dkimArgument != nil {
-			err = d.Set(argument, dkimArgument)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-		}
-	}
-	for _, argumentNumber := range []string{
-		"length",
-	} {
-		dkimArgumentNumber := dkim[argumentNumber]
-		if dkimArgumentNumber != nil {
-			value := reflect.ValueOf(dkim[argumentNumber])
-			intValue, err := strconv.Atoi(fmt.Sprint(value))
-			err = d.Set(argumentNumber, intValue)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-		}
-	}
-
-	d.SetId(domain)
+	d.SetId(id)
 
 	return diags
 }
 
-func resourceDkimUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return resourceDomainRead(ctx, d, m)
-}
-
 func resourceDkimDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
-
 	c := m.(*APIClient)
-
-	deleteDkimRequest := api.NewDeleteDKIMKeyRequest()
-	items := make([]string, 1)
-	items[0] = d.Id()
-	deleteDkimRequest.SetItems(items)
-
-	request := c.client.DKIMApi.DeleteDKIMKey(ctx).DeleteDKIMKeyRequest(*deleteDkimRequest)
-	_, _, err := c.client.DKIMApi.DeleteDKIMKeyExecute(request)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.SetId("")
-
+	mailcowDeleteRequest := api.NewDeleteDkimRequest()
+	diags, _ := mailcowDelete(ctx, d, mailcowDeleteRequest, c)
 	return diags
 }
