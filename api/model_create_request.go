@@ -53,6 +53,14 @@ func NewCreateSyncjobRequest() *MailcowCreateRequest {
 	return &this
 }
 
+func NewCreateOAuth2ClientRequest() *MailcowCreateRequest {
+	this := MailcowCreateRequest{}
+	this.payload = make(map[string]interface{})
+	this.endpoint = "/api/v1/add/oauth2-client"
+	this.ResourceName = "resourceOAuth2Client"
+	return &this
+}
+
 func (o *MailcowCreateRequest) Get(key string) interface{} {
 	if !o.Has(key) {
 		var ret bool
@@ -129,7 +137,7 @@ func (o MailcowCreateRequest) MarshalJSON(requestSpec map[string]interface{}) ([
 	//if o.attr != nil {
 	//	toSerialize["attr"] = o.attr
 	//}
-	for key, _ := range requestSpec {
+	for key := range requestSpec {
 		//key := element.(map)
 		if o.payload[key] != nil {
 			toSerialize[key] = o.payload[key]

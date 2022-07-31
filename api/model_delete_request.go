@@ -47,6 +47,13 @@ func NewDeleteSyncjobRequest() *MailcowDeleteRequest {
 	return &this
 }
 
+func NewDeleteOAuth2ClientRequest() *MailcowDeleteRequest {
+	this := MailcowDeleteRequest{}
+	this.endpoint = "/api/v1/delete/oauth2-client"
+	this.ResourceName = "resourceOAuth2Client"
+	return &this
+}
+
 func (o *MailcowDeleteRequest) GetItem() *string {
 	log.Print("[TRACE] GetItem")
 	if !o.HasItem() {

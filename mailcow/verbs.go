@@ -52,6 +52,19 @@ func readRequest(request api.ApiMailcowGetRequest) (map[string]interface{}, erro
 	return result, nil
 }
 
+func readAllRequest(request api.ApiMailcowGetAllRequest) ([]map[string]interface{}, error) {
+	response, err := request.ApiService.MailcowGetAllExecute(request)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]map[string]interface{}, 0)
+	err = json.NewDecoder(response.Body).Decode(&result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
 func updateRequestSetAttr(mailcowUpdateRequest *api.MailcowUpdateRequest, res *schema.Resource, data *schema.ResourceData, exclude *[]string, mapArguments *map[string]string) {
 	for argument := range (*res).Schema {
 		log.Print("[TRACE] updateRequestSetAttr argument: ", argument)

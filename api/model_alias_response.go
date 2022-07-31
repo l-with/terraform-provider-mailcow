@@ -5,13 +5,13 @@ import (
 	"fmt"
 )
 
-func (o *MailcowResponseArray) GetId() (error, *string) {
+func (o *MailcowResponseArray) GetAliasId() (*string, error) {
 	if !o.HasFinalMsgItem(0) || !o.HasFinalMsgItem(2) {
-		return errors.New(fmt.Sprint("msg error: ", o.GetFinalMsgs())), nil
+		return nil, errors.New(fmt.Sprint("msg error: ", o.GetFinalMsgs()))
 	}
 	receipt := *o.GetFinalMsgItem(0)
 	if receipt != "alias_added" {
-		return errors.New(fmt.Sprint("msg error: ", receipt)), nil
+		return nil, errors.New(fmt.Sprint("msg error: ", receipt))
 	}
-	return nil, o.GetFinalMsgItem(2)
+	return o.GetFinalMsgItem(2), nil
 }

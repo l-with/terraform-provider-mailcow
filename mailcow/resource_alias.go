@@ -71,7 +71,7 @@ func resourceAliasCreate(ctx context.Context, d *schema.ResourceData, m interfac
 		return diag.FromErr(err)
 	}
 
-	err, id := response.GetId()
+	id, err := response.GetAliasId()
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -99,6 +99,9 @@ func resourceAliasRead(ctx context.Context, d *schema.ResourceData, m interface{
 	}
 
 	setResourceData(resourceAlias(), d, &alias, nil, nil)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	d.SetId(fmt.Sprint(alias["id"].(float64)))
 
