@@ -46,3 +46,20 @@ func (a *ApiService) MailcowGetSyncjob(ctx context.Context, id string) ApiMailco
 		id:         id,
 	}
 }
+
+func (a *ApiService) MailcowGetOAuth2Client(ctx context.Context, id string) ApiMailcowGetRequest {
+	return ApiMailcowGetRequest{
+		ApiService: a,
+		ctx:        ctx,
+		endpoint:   "/api/v1/get/oauth2-client/{id}",
+		id:         id,
+	}
+}
+
+func (a *ApiService) MailcowGetOAuth2Clients(ctx context.Context) ApiMailcowGetAllRequest {
+	return ApiMailcowGetAllRequest{
+		ApiService: a,
+		ctx:        ctx,
+		endpoint:   "/api/v1/get/oauth2-client/all",
+	}
+}

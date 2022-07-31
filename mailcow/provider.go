@@ -26,11 +26,12 @@ func Provider() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"mailcow_alias":   resourceAlias(),
-			"mailcow_domain":  resourceDomain(),
-			"mailcow_mailbox": resourceMailbox(),
-			"mailcow_dkim":    resourceDkim(),
-			"mailcow_syncjob": resourceSyncjob(),
+			"mailcow_alias":         resourceAlias(),
+			"mailcow_domain":        resourceDomain(),
+			"mailcow_mailbox":       resourceMailbox(),
+			"mailcow_dkim":          resourceDkim(),
+			"mailcow_syncjob":       resourceSyncjob(),
+			"mailcow_oauth2_client": resourceOAuth2Client(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"mailcow_domain":  dataSourceDomain(),
