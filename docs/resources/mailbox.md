@@ -25,7 +25,7 @@ resource "mailcow_mailbox" "demo" {
 - `domain` (String) domain name
 - `full_name` (String) Full name of the mailbox user
 - `local_part` (String) left part of email address
-- `password` (String, Sensitive) mailbox password
+- `password` (String, Sensitive) mailbox password (the password is excluded from update)
 
 ### Optional
 

@@ -2,6 +2,7 @@ package mailcow
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/l-with/terraform-provider-mailcow/api"
@@ -44,7 +45,7 @@ func resourceMailbox() *schema.Resource {
 			},
 			"password": {
 				Type:        schema.TypeString,
-				Description: "mailbox password",
+				Description: "mailbox password (the password is excluded from update)",
 				Required:    true,
 				Sensitive:   true,
 			},
