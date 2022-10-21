@@ -22,6 +22,7 @@ jobs:
 
       - name: Test
         env:
+          MAILCOW_INSECURE: true
           # These secrets will need to be configured for the repository:
           MAILCOW_HOST_NAME: ${{ secrets.MAILCOW_HOST_NAME }}
           MAILCOW_API_KEY: ${{ secrets.MAILCOW_API_KEY }}
