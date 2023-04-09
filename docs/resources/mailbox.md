@@ -38,7 +38,7 @@ resource "mailcow_mailbox" "demo" {
 - `smtp_access` (Boolean) if 'SMTP' is an allowed protocol
 - `sogo_access` (Boolean) if direct login access to SOGo is granted
 - `tls_enforce_in` (Boolean) force inbound email tls encryption
-- `tls_enforce_out` (Boolean) force outbound tmail tls encryption
+- `tls_enforce_out` (Boolean) force outbound mail tls encryption
 
 ### Read-Only
 

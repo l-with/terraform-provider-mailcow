@@ -68,7 +68,7 @@ func resourceMailbox() *schema.Resource {
 			},
 			"tls_enforce_out": {
 				Type:        schema.TypeBool,
-				Description: "force outbound tmail tls encryption",
+				Description: "force outbound mail tls encryption",
 				Default:     false,
 				Optional:    true,
 			},
