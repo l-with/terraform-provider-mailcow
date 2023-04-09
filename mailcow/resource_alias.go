@@ -98,7 +98,7 @@ func resourceAliasRead(ctx context.Context, d *schema.ResourceData, m interface{
 		return diag.FromErr(errors.New("alias id not found: " + id))
 	}
 
-	setResourceData(resourceAlias(), d, &alias, nil, nil)
+	err = setResourceData(resourceAlias(), d, &alias, nil, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}

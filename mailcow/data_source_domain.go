@@ -149,7 +149,10 @@ func dataSourceDomainRead(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	//exclude := []string{"tags"}
-	setResourceData(dataSourceDomain(), d, &domain, nil, nil)
+	err = setResourceData(dataSourceDomain(), d, &domain, nil, nil)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	domainTags := domain["tags"]
 	if domainTags != nil {

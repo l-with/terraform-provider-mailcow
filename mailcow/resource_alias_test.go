@@ -2,6 +2,7 @@ package mailcow
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -10,53 +11,48 @@ import (
 func TestAccResourceAlias(t *testing.T) {
 	//	domain := "domain-with4test-domain.440044.xyz"
 	//	localPart := "localpart-with4alias-test"
-	aliasLocalPart := "alias-localpart-with4alias-test"
+	domain := fmt.Sprintf("with-alias-%s.domain-%s.xyz", randomLowerCaseString(4), randomLowerCaseString(4))
+	localPart := fmt.Sprintf("with-alias-%s", randomLowerCaseString(4))
+	percentS := "%s"
+	aliasLocalPart := fmt.Sprintf("with-alias-%s-%s", randomLowerCaseString(4), percentS)
+
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceAliasSimple(aliasLocalPart),
+				Config: testAccResourceAliasSimple(fmt.Sprintf(aliasLocalPart, "1")),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("mailcow_alias.simple", "address", aliasLocalPart+"-simple@440044.xyz"),
+					resource.TestCheckResourceAttr("mailcow_alias.simple", "address", fmt.Sprintf(aliasLocalPart, "1")+"-simple@440044.xyz"),
 				),
 			},
-			/*
-				{
-					Config: testAccResourceAliasSimple(aliasLocalPart + "2"),
-					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttr("mailcow_alias.simple", "address", aliasLocalPart+"2-demo@440044.xyz"),
-						resource.TestCheckResourceAttr("mailcow_alias.simple", "sogo_visible", "false"),
-					),
-				},
-				{
-					Config: testAccResourceAliasSimpleUpdate(aliasLocalPart + "2"),
-					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttr("mailcow_alias.simple", "sogo_visible", "true"),
-					),
-				},
-				{
-					Config: testAccResourceAlias(domain, localPart, aliasLocalPart),
-					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttr("mailcow_alias.alias", "address", aliasLocalPart+"@"+domain),
-					),
-				},
-				{
-					Config: testAccResourceAlias(domain, localPart, aliasLocalPart+"2"),
-					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttr("mailcow_alias.alias", "address", aliasLocalPart+"2@"+domain),
-					),
-				},
-				{
-					Config:      testAccResourceAliasError("alias-xyzzy@xyzzy", "goto-xyzzy@xyzzy"),
-					ExpectError: regexp.MustCompile("danger"),
-				},
-				{
-					Config:      testAccResourceAliasUpdateError(domain, localPart, aliasLocalPart+"@"+domain),
-					ExpectError: regexp.MustCompile("danger"),
-				},
-
-			*/
+			{
+				Config: testAccResourceAliasSimple(fmt.Sprintf(aliasLocalPart, "1")),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("mailcow_alias.simple", "address", fmt.Sprintf(aliasLocalPart, "1")+"-simple@440044.xyz"),
+					resource.TestCheckResourceAttr("mailcow_alias.simple", "sogo_visible", "false"),
+				),
+			},
+			{
+				Config: testAccResourceAliasSimpleUpdate(fmt.Sprintf(aliasLocalPart, "1")),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("mailcow_alias.simple", "sogo_visible", "true"),
+				),
+			},
+			{
+				Config: testAccResourceAlias(domain, localPart, fmt.Sprintf(aliasLocalPart, "2")),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("mailcow_alias.alias", "address", fmt.Sprintf(aliasLocalPart, "2")+"@"+domain),
+				),
+			},
+			{
+				Config:      testAccResourceAliasError("alias-xyzzy@xyzzy", "goto-xyzzy@xyzzy"),
+				ExpectError: regexp.MustCompile("danger"),
+			},
+			{
+				Config:      testAccResourceAliasUpdateError(domain, localPart, fmt.Sprintf(aliasLocalPart, "3")+"@"+domain),
+				ExpectError: regexp.MustCompile("danger"),
+			},
 		},
 	})
 }

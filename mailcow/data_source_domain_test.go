@@ -11,7 +11,7 @@ import (
 )
 
 func TestAccDataSourceDomain(t *testing.T) {
-	domain := "domain-with4test-domain.440044.xyz"
+	domain := fmt.Sprintf("with-ds-domain-%s.domain-%s.xyz", randomLowerCaseString(4), randomLowerCaseString(4))
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,

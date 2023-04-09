@@ -8,46 +8,47 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccResourceDomainOK(t *testing.T) {
-	subdomainPrefix := "domain-with4domain-test"
+func TestAccResourceDomain(t *testing.T) {
+	percentS := "%s"
+	domainFmt := fmt.Sprintf("with-domain-%s%s.domain-%s.xyz", randomLowerCaseString(4), percentS, randomLowerCaseString(4))
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceDomainSimple(subdomainPrefix),
+				Config: testAccResourceDomainSimple(fmt.Sprintf(domainFmt, "1")),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("mailcow_domain.domain-simple", "id", subdomainPrefix+".440044.xyz"),
+					resource.TestCheckResourceAttr("mailcow_domain.domain-simple", "id", fmt.Sprintf(domainFmt, "1")),
 				),
 			},
 			{
-				Config:   testAccResourceDomainSimple(subdomainPrefix),
+				Config:   testAccResourceDomainSimple(fmt.Sprintf(domainFmt, "1")),
 				PlanOnly: true,
 			},
 			{
-				Config: testAccResourceDomainSimple(subdomainPrefix + "2"),
+				Config: testAccResourceDomainSimple(fmt.Sprintf(domainFmt, "2")),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("mailcow_domain.domain-simple", "id", subdomainPrefix+"2.440044.xyz"),
+					resource.TestCheckResourceAttr("mailcow_domain.domain-simple", "id", fmt.Sprintf(domainFmt, "2")),
 				),
 			},
 			{
-				Config: testAccResourceDomainSimpleUpdate(subdomainPrefix + "2"),
+				Config: testAccResourceDomainSimpleUpdate(fmt.Sprintf(domainFmt, "2")),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("mailcow_domain.domain-simple", "aliases", "1000"),
 				),
 			},
 			{
-				Config: testAccResourceDomain(subdomainPrefix+"-backup", "true", "42000"),
+				Config: testAccResourceDomain(fmt.Sprintf(domainFmt, "backup"), "true", "42000"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("mailcow_domain.domain", "id", subdomainPrefix+"-backup.440044.xyz"),
+					resource.TestCheckResourceAttr("mailcow_domain.domain", "id", fmt.Sprintf(domainFmt, "backup")),
 					resource.TestCheckResourceAttr("mailcow_domain.domain", "backupmx", "true"),
 					resource.TestCheckResourceAttr("mailcow_domain.domain", "quota", "42000"),
 				),
 			},
 			{
-				Config: testAccResourceDomain(subdomainPrefix+"-backup", "false", "84000"),
+				Config: testAccResourceDomain(fmt.Sprintf(domainFmt, "backup"), "false", "84000"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("mailcow_domain.domain", "id", subdomainPrefix+"-backup.440044.xyz"),
+					resource.TestCheckResourceAttr("mailcow_domain.domain", "id", fmt.Sprintf(domainFmt, "backup")),
 					resource.TestCheckResourceAttr("mailcow_domain.domain", "backupmx", "false"),
 					resource.TestCheckResourceAttr("mailcow_domain.domain", "quota", "84000"),
 				),
@@ -60,21 +61,21 @@ func TestAccResourceDomainOK(t *testing.T) {
 	})
 }
 
-func testAccResourceDomainSimple(name string) string {
+func testAccResourceDomainSimple(domain string) string {
 	return fmt.Sprintf(`
 resource "mailcow_domain" "domain-simple" {
-  domain   = "%[1]s.440044.xyz"
+  domain   = "%[1]s"
 }
-`, name)
+`, domain)
 }
 
-func testAccResourceDomainSimpleUpdate(name string) string {
+func testAccResourceDomainSimpleUpdate(domain string) string {
 	return fmt.Sprintf(`
 resource "mailcow_domain" "domain-simple" {
-  domain  = "%[1]s.440044.xyz"
+  domain  = "%[1]s"
   aliases = 1000
 }
-`, name)
+`, domain)
 }
 
 func testAccResourceDomainCreateError() string {
@@ -85,12 +86,12 @@ resource "mailcow_domain" "domain-create-error" {
 `
 }
 
-func testAccResourceDomain(prefix string, backupmx string, quota string) string {
+func testAccResourceDomain(domain string, backupmx string, quota string) string {
 	return fmt.Sprintf(`
 resource "mailcow_domain" "domain" {
-  domain   = "%[1]s.440044.xyz"
+  domain   = "%[1]s"
   backupmx = %[2]s
   quota = %[3]s
 }
-`, prefix, backupmx, quota)
+`, domain, backupmx, quota)
 }

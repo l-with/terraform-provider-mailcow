@@ -111,25 +111,6 @@ func resourceMailbox() *schema.Resource {
 	}
 }
 
-func isMailboxAttribute(argument string) bool {
-	mailboxAttributes := []string{
-		"force_pw_update",
-		"tls_enforce_in",
-		"tls_enforce_out",
-		"sogo_access",
-		"imap_access",
-		"pop3_access",
-		"smtp_access",
-		"sieve_access",
-	}
-	for _, attribute := range mailboxAttributes {
-		if argument == attribute {
-			return true
-		}
-	}
-	return false
-}
-
 func resourceMailboxCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
@@ -185,10 +166,18 @@ func resourceMailboxRead(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 	mailbox["address"] = id
 	mailbox["full_name"] = mailbox["name"]
+	mailbox["quota"] = int(mailbox["quota"].(float64)) / (1024 * 1024)
+
 	excludeAndAttributes := append(exclude, mailboxAttributes...)
-	setResourceData(resourceMailbox(), d, &mailbox, &excludeAndAttributes, nil)
+	err = setResourceData(resourceMailbox(), d, &mailbox, &excludeAndAttributes, nil)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	attributes := mailbox["attributes"].(map[string]interface{})
-	setResourceData(resourceMailbox(), d, &attributes, &exclude, &mailboxAttributes)
+	err = setResourceData(resourceMailbox(), d, &attributes, &exclude, &mailboxAttributes)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	d.SetId(id)
 

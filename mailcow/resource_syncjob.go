@@ -47,7 +47,7 @@ func resourceSyncjob() *schema.Resource {
 			},
 			"delete1": {
 				Type:        schema.TypeBool,
-				Description: "delete from source when completed (--delete1)",
+				Description: "delete (mail) from source when completed (--delete1)",
 				Default:     false,
 				Optional:    true,
 			},
