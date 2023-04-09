@@ -11,8 +11,8 @@ import (
 )
 
 func TestAccDataSourceMailbox(t *testing.T) {
-	domain := "domain-with4mailbox-test-440044.xyz"
-	localPart := "localpart-with4mailbox-data-test"
+	domain := fmt.Sprintf("with-ds-mailbox-%s.domain-%s.xyz", randomLowerCaseString(4), randomLowerCaseString(4))
+	localPart := fmt.Sprintf("with-ds-mailbox-%s", randomLowerCaseString(4))
 	fullName := "full name"
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

@@ -34,7 +34,7 @@ resource "mailcow_syncjob" "syncjob" {
 - `active` (Boolean) is sync job active or not
 - `automap` (Boolean) try to automap folders ("Sent items", "Sent" => "Sent" etc.) (--automap)
 - `custom_params` (String) custom parameters
-- `delete1` (Boolean) delete from source when completed (--delete1)
+- `delete1` (Boolean) delete (mail) from source when completed (--delete1)
 - `delete2` (Boolean) delete messages on destination that are not on source (--delete2)
 - `delete2duplicates` (Boolean) delete duplicates on destination (--delete2duplicates)
 - `enc1` (String) the encryption method used to connect to the target mailserver (SSL,TLS,PLAIN)

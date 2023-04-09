@@ -121,9 +121,15 @@ func dataSourceMailboxRead(ctx context.Context, d *schema.ResourceData, m interf
 	mailbox["address"] = id
 	mailbox["full_name"] = mailbox["name"]
 	excludeAndAttributes := append(exclude, mailboxAttributes...)
-	setResourceData(resourceMailbox(), d, &mailbox, &excludeAndAttributes, nil)
+	err = setResourceData(resourceMailbox(), d, &mailbox, &excludeAndAttributes, nil)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	attributes := mailbox["attributes"].(map[string]interface{})
-	setResourceData(resourceMailbox(), d, &attributes, &exclude, &mailboxAttributes)
+	err = setResourceData(resourceMailbox(), d, &attributes, &exclude, &mailboxAttributes)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	d.SetId(id)
 

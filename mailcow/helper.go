@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"log"
+	"math/rand"
 	"strconv"
+	"time"
 )
 
 func resourceDataSet(rd *schema.ResourceData, argument string, value any, elem *schema.Schema) error {
@@ -85,4 +87,14 @@ func isElementIn(argument string, arguments *[]string) bool {
 		}
 	}
 	return false
+}
+
+func randomLowerCaseString(length int) string {
+	const charset = "abcdefghijklmnopqrstuvwxyz0123456789"
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[r.Intn(len(charset))]
+	}
+	return string(b)
 }

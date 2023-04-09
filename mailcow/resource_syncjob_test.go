@@ -8,8 +8,9 @@ import (
 )
 
 func TestAccResourceSyncjob(t *testing.T) {
-	domain := "domain-with4mailbox-test-440044.xyz"
-	localPart := "localpart-with4mailbox-test"
+	domain := fmt.Sprintf("with-syncjob-%s.domain-%s.xyz", randomLowerCaseString(4), randomLowerCaseString(4))
+	localPart := fmt.Sprintf("with-syncjob-%s", randomLowerCaseString(4))
+
 	host1 := "example.com"
 	user1 := "demo@example.com"
 	resource.UnitTest(t, resource.TestCase{

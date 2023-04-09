@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/l-with/terraform-provider-mailcow/api"
+	"log"
 	"reflect"
 	"strconv"
 )
@@ -96,6 +97,14 @@ func resourceDomain() *schema.Resource {
 				Default:     "10s",
 				Optional:    true,
 			},
+			"restart_sogo": {
+				Type:                  schema.TypeBool,
+				Description:           "if the SOGo container should be restarted after adding the domain (changes are suppressed)",
+				Default:               true,
+				Optional:              true,
+				DiffSuppressOnRefresh: true,
+				DiffSuppressFunc:      func(k, old, new string, d *schema.ResourceData) bool { return true },
+			},
 		},
 	}
 }
@@ -104,6 +113,8 @@ func resourceDomainCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	var diags diag.Diagnostics
 
 	c := m.(*APIClient)
+
+	log.Print("resourceDomainCreate")
 
 	mailcowCreateRequest := api.NewCreateDomainRequest()
 
@@ -118,7 +129,6 @@ func resourceDomainCreate(ctx context.Context, d *schema.ResourceData, m interfa
 			return diag.FromErr(err)
 		}
 		mailcowCreateRequest.Set("rl_value", float32(rateValue))
-
 	}
 	createRequestSet(mailcowCreateRequest, resourceDomain(), d, &exclude, nil)
 
@@ -134,6 +144,7 @@ func resourceDomainCreate(ctx context.Context, d *schema.ResourceData, m interfa
 
 func resourceDomainRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
+	log.Print("resourceDomainRead")
 
 	c := m.(*APIClient)
 	id := d.Id()
@@ -167,8 +178,10 @@ func resourceDomainRead(ctx context.Context, d *schema.ResourceData, m interface
 			domain["rate_limit"] = rl["value"] + rl["frame"]
 		}
 	}
-
-	setResourceData(resourceDomain(), d, &domain, nil, nil)
+	err = setResourceData(resourceDomain(), d, &domain, nil, nil)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	d.SetId(id)
 
@@ -194,6 +207,7 @@ func resourceDomainUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 
 	updateExclude := []string{
 		"rate_limit",
+		//"restart_sogo",
 	}
 	err := mailcowUpdate(ctx, resourceDomain(), d, &updateExclude, nil, mailcowUpdateRequest, c)
 	if err != nil {
