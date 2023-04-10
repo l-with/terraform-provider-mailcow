@@ -3,7 +3,7 @@ HOSTNAME=registry.terraform.io
 NAMESPACE=l-with
 NAME=mailcow
 BINARY=terraform-provider-${NAME}
-VERSION=0.1.7
+VERSION=0.6.1
 OS_ARCH=darwin_arm64
 
 default: install
