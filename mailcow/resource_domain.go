@@ -178,7 +178,7 @@ func resourceDomainRead(ctx context.Context, d *schema.ResourceData, m interface
 	}
 	domain["restart_sogo"], err = strconv.ParseBool(d.State().Attributes["restart_sogo"])
 	if err != nil {
-		return diag.FromErr(err)
+		domain["restart_sogo"] = false
 	}
 
 	err = setResourceData(resourceDomain(), d, &domain, nil, nil)
