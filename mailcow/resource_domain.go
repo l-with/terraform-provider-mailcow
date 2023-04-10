@@ -98,12 +98,10 @@ func resourceDomain() *schema.Resource {
 				Optional:    true,
 			},
 			"restart_sogo": {
-				Type:                  schema.TypeBool,
-				Description:           "if the SOGo container should be restarted after adding the domain (changes are suppressed)",
-				Default:               true,
-				Optional:              true,
-				DiffSuppressOnRefresh: true,
-				DiffSuppressFunc:      func(k, old, new string, d *schema.ResourceData) bool { return true },
+				Type:        schema.TypeBool,
+				Description: "if the SOGo container should be restarted after adding the domain",
+				Default:     true,
+				Optional:    true,
 			},
 		},
 	}
@@ -178,6 +176,11 @@ func resourceDomainRead(ctx context.Context, d *schema.ResourceData, m interface
 			domain["rate_limit"] = rl["value"] + rl["frame"]
 		}
 	}
+	domain["restart_sogo"], err = strconv.ParseBool(d.State().Attributes["restart_sogo"])
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	err = setResourceData(resourceDomain(), d, &domain, nil, nil)
 	if err != nil {
 		return diag.FromErr(err)
