@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"log"
 	"reflect"
 )
@@ -106,7 +107,7 @@ func (o *MailcowResponseArray) GetFinalMsgs() *string {
 		if msgs != "" {
 			msgs = msgs + ", "
 		}
-		msgs = msgs + msgItem.(string)
+		msgs = msgs + fmt.Sprint(msgItem)
 	}
 	return &msgs
 }
@@ -131,7 +132,7 @@ func (o *MailcowResponseArray) GetFinalMsgItem(i int) *string {
 		return &ret
 	}
 	mailcowMsgs := o.GetFinalMsg().([]interface{})
-	msgItem := mailcowMsgs[i].(string)
+	msgItem := fmt.Sprint(mailcowMsgs[i])
 	return &msgItem
 }
 
