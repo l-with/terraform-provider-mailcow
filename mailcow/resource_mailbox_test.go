@@ -3,6 +3,7 @@ package mailcow
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -12,7 +13,8 @@ func TestAccResourceMailbox(t *testing.T) {
 	domain := fmt.Sprintf("with-mailbox-%s.domain-%s.xyz", randomLowerCaseString(4), randomLowerCaseString(4))
 	localPart := fmt.Sprintf("with-mailbox-%s", randomLowerCaseString(4))
 	fullName := "new full name"
-	quota := 42
+	quota := 4096
+	domainMaxQuota := 5120
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -25,12 +27,24 @@ func TestAccResourceMailbox(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccResourceMailboxUpdate(domain, localPart, fullName, quota),
+				Config: testAccResourceMailboxUpdate(domain, domainMaxQuota, localPart, fullName, quota),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("mailcow_mailbox.mailbox", "full_name", fullName),
 					resource.TestCheckResourceAttr("mailcow_mailbox.mailbox", "tls_enforce_out", "true"),
-					resource.TestCheckResourceAttr("mailcow_mailbox.mailbox", "quota", "42"),
+					resource.TestCheckResourceAttr("mailcow_mailbox.mailbox", "quota", strconv.Itoa(quota)),
 				),
+			},
+			{
+				Config: testAccResourceMailboxUpdate(domain, domainMaxQuota, localPart, fullName, quota+1024),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("mailcow_mailbox.mailbox", "full_name", fullName),
+					resource.TestCheckResourceAttr("mailcow_mailbox.mailbox", "tls_enforce_out", "true"),
+					resource.TestCheckResourceAttr("mailcow_mailbox.mailbox", "quota", strconv.Itoa(quota+1024)),
+				),
+			},
+			{
+				Config:      testAccResourceMailboxUpdate(domain, domainMaxQuota, localPart, fullName, domainMaxQuota+1024),
+				ExpectError: regexp.MustCompile("danger"),
 			},
 			{
 				Config:      testAccResourceMailboxCreateError("xyzzy"),
@@ -56,21 +70,22 @@ resource "mailcow_mailbox" "mailbox" {
 `, domain, localPart)
 }
 
-func testAccResourceMailboxUpdate(domain string, localPart string, fullName string, quota int) string {
+func testAccResourceMailboxUpdate(domain string, domainMaxquota int, localPart string, fullName string, quota int) string {
 	return fmt.Sprintf(`
 resource "mailcow_domain" "domain" {
   domain = "%[1]s"
+  maxquota = %[2]d
 }
 
 resource "mailcow_mailbox" "mailbox" {
-  local_part      = "%[2]s"
+  local_part      = "%[3]s"
   domain          = mailcow_domain.domain.id
   password        = "secret-password"
-  full_name       = "%[3]s"
+  full_name       = "%[4]s"
   tls_enforce_out = true
-  quota           = %[4]d
+  quota           = %[5]d
 }
-`, domain, localPart, fullName, quota)
+`, domain, domainMaxquota, localPart, fullName, quota)
 }
 
 func testAccResourceMailboxCreateError(domain string) string {
