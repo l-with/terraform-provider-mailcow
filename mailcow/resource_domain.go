@@ -128,6 +128,7 @@ func resourceDomainCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		}
 		mailcowCreateRequest.Set("rl_value", float32(rateValue))
 	}
+	mailcowCreateRequest.Set("dkim_selector", "0")
 	createRequestSet(mailcowCreateRequest, resourceDomain(), d, &exclude, nil)
 
 	domain := d.Get("domain").(string)
