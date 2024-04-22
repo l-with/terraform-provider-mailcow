@@ -3,7 +3,7 @@ module github.com/l-with/terraform-provider-mailcow
 go 1.21
 
 require (
-	github.com/hashicorp/terraform-plugin-docs v0.19.0
+	github.com/hashicorp/terraform-plugin-docs v0.19.1
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.33.0
 	golang.org/x/oauth2 v0.19.0
 )
