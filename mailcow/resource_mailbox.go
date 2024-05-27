@@ -14,6 +14,11 @@ func resourceMailbox() *schema.Resource {
 		ReadContext:   resourceMailboxRead,
 		UpdateContext: resourceMailboxUpdate,
 		DeleteContext: resourceMailboxDelete,
+
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceMailboxImport,
+		},
+
 		Schema: map[string]*schema.Schema{
 			"active": {
 				Type:        schema.TypeBool,
@@ -109,6 +114,10 @@ func resourceMailbox() *schema.Resource {
 			//"quarantine_category": "reject"
 		},
 	}
+}
+
+func resourceMailboxImport(_ context.Context, d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceMailboxCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

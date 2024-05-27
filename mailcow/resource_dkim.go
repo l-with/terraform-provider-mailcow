@@ -12,6 +12,11 @@ func resourceDkim() *schema.Resource {
 		CreateContext: resourceDkimCreate,
 		ReadContext:   resourceDkimRead,
 		DeleteContext: resourceDkimDelete,
+
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceDkimImport,
+		},
+
 		Schema: map[string]*schema.Schema{
 			"domain": {
 				Type:     schema.TypeString,
@@ -44,6 +49,10 @@ func resourceDkim() *schema.Resource {
 			//},
 		},
 	}
+}
+
+func resourceDkimImport(_ context.Context, d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceDkimCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

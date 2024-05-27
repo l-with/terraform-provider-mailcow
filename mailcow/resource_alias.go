@@ -15,6 +15,11 @@ func resourceAlias() *schema.Resource {
 		ReadContext:   resourceAliasRead,
 		UpdateContext: resourceAliasUpdate,
 		DeleteContext: resourceAliasDelete,
+
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceAliasImport,
+		},
+
 		Schema: map[string]*schema.Schema{
 			"active": {
 				Type:        schema.TypeBool,
@@ -50,6 +55,10 @@ func resourceAlias() *schema.Resource {
 			},
 		},
 	}
+}
+
+func resourceAliasImport(_ context.Context, d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceAliasCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

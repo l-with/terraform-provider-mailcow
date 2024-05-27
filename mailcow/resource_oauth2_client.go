@@ -15,6 +15,11 @@ func resourceOAuth2Client() *schema.Resource {
 		CreateContext: resourceOAuth2ClientCreate,
 		ReadContext:   resourceOAuth2ClientRead,
 		DeleteContext: resourceOAuth2ClientDelete,
+
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceOAuth2ClientImport,
+		},
+
 		Schema: map[string]*schema.Schema{
 			"client_id": {
 				Type:     schema.TypeString,
@@ -36,6 +41,10 @@ func resourceOAuth2Client() *schema.Resource {
 			},
 		},
 	}
+}
+
+func resourceOAuth2ClientImport(_ context.Context, d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceOAuth2ClientCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
