@@ -54,6 +54,13 @@ func NewDeleteOAuth2ClientRequest() *MailcowDeleteRequest {
 	return &this
 }
 
+func NewDeleteDomainAdminRequest() *MailcowDeleteRequest {
+	this := MailcowDeleteRequest{}
+	this.endpoint = "/api/v1/delete/domain-admin"
+	this.ResourceName = "resourceDomainadmin"
+	return &this
+}
+
 func (o *MailcowDeleteRequest) GetItem() *string {
 	log.Print("[TRACE] GetItem")
 	if !o.HasItem() {

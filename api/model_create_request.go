@@ -61,6 +61,14 @@ func NewCreateOAuth2ClientRequest() *MailcowCreateRequest {
 	return &this
 }
 
+func NewCreateDomainAdminRequest() *MailcowCreateRequest {
+	this := MailcowCreateRequest{}
+	this.payload = make(map[string]interface{})
+	this.endpoint = "/api/v1/add/domain-admin"
+	this.ResourceName = "resourceDomainAdmin"
+	return &this
+}
+
 func (o *MailcowCreateRequest) Get(key string) interface{} {
 	if !o.Has(key) {
 		var ret bool

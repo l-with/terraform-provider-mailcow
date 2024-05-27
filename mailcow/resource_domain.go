@@ -18,6 +18,11 @@ func resourceDomain() *schema.Resource {
 		ReadContext:   resourceDomainRead,
 		UpdateContext: resourceDomainUpdate,
 		DeleteContext: resourceDomainDelete,
+
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceDomainImport,
+		},
+
 		Schema: map[string]*schema.Schema{
 			"active": {
 				Type:        schema.TypeBool,
@@ -105,6 +110,10 @@ func resourceDomain() *schema.Resource {
 			},
 		},
 	}
+}
+
+func resourceDomainImport(_ context.Context, d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceDomainCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

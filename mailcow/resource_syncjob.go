@@ -17,6 +17,11 @@ func resourceSyncjob() *schema.Resource {
 		ReadContext:   resourceSyncjobRead,
 		UpdateContext: resourceSyncjobUpdate,
 		DeleteContext: resourceSyncjobDelete,
+
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceSyncjobImport,
+		},
+
 		Schema: map[string]*schema.Schema{
 			// mailcow
 			"active": {
@@ -149,6 +154,10 @@ func resourceSyncjob() *schema.Resource {
 			},
 		},
 	}
+}
+
+func resourceSyncjobImport(_ context.Context, d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceSyncjobCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
