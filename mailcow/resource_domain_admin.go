@@ -32,7 +32,6 @@ func resourceDomainAdmin() *schema.Resource {
 			},
 			"domains": {
 				Type:        schema.TypeList,
-				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "domain names",
 				Required:    true,
