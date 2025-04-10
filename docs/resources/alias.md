@@ -23,8 +23,7 @@ resource "mailcow_alias" "demo" {
 ### Required
 
 - `address` (String) alias address, for catchall use "@domain.tld"
-- `goto` (String) destination address, comma separated
-Special values are spam@locahost,
+- `goto` (String) destination address, comma separated. Special values are "ham@localhost", "spam@localhost" and "null@localhost".
 
 ### Optional
 

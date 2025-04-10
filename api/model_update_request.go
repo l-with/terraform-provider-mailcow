@@ -59,6 +59,11 @@ func NewUpdateDomainAdminRequest() *MailcowUpdateRequest {
 	return &this
 }
 
+func (o *MailcowUpdateRequest) DeleteAttr(key string) {
+	log.Print("[TRACE] UpdateRequest Delete attr: ", key)
+	delete(o.attr, key)
+}
+
 func (o *MailcowUpdateRequest) GetAttr(key string) interface{} {
 	if !o.HasAttr(key) {
 		var ret bool
