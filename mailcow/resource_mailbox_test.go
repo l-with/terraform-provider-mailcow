@@ -15,6 +15,7 @@ func TestAccResourceMailbox(t *testing.T) {
 	fullName := "new full name"
 	quota := 4096
 	domainMaxQuota := 5120
+	authSource := "mailcow"
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -24,6 +25,7 @@ func TestAccResourceMailbox(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("mailcow_mailbox.mailbox", "address", localPart+"@"+domain),
 					resource.TestCheckResourceAttr("mailcow_mailbox.mailbox", "tls_enforce_out", "true"),
+					resource.TestCheckResourceAttr("mailcow_mailbox.mailbox", "authsource", authSource),
 				),
 			},
 			{
