@@ -5,7 +5,15 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/l-with/terraform-provider-mailcow/api"
+)
+
+const (
+	mailcowAuthsourceInternal = "mailcow"
+	mailcowAuthsourceKeycloak = "keycloak"
+	mailcowAuthsourceLdap     = "ldap"
+	mailcowAuthsourceOidc     = "generic-oidc"
 )
 
 func resourceMailbox() *schema.Resource {
@@ -37,6 +45,13 @@ func resourceMailbox() *schema.Resource {
 				Description: "left part of email address",
 				Required:    true,
 				ForceNew:    true,
+			},
+			"authsource": {
+				Type:         schema.TypeString,
+				Description:  "Authentication source to use. One of: generic-oidc, mailcow, keycloak, ldap.",
+				Default:      mailcowAuthsourceInternal,
+				Optional:     true,
+				ValidateFunc: validation.StringInSlice([]string{mailcowAuthsourceInternal, mailcowAuthsourceKeycloak, mailcowAuthsourceLdap, mailcowAuthsourceOidc}, false),
 			},
 			"address": {
 				Type:        schema.TypeString,

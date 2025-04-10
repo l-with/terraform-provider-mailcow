@@ -2,14 +2,37 @@ name: Go
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Ensure IdP config
+        shell: bash
+        env:
+          MAILCOW_HOST_NAME: ${{ secrets.MAILCOW_HOST_NAME }}
+          MAILCOW_API_KEY: ${{ secrets.MAILCOW_API_KEY }}
+        run: |
+          curl -k "https://$MAILCOW_HOST_NAME/api/v1/edit/identity-provider" \
+            -X POST \
+            -H "X-API-Key: $MAILCOW_API_KEY" \
+            -H 'Content-Type: application/json' \
+            -H 'Accept: application/json' --data \
+            '{
+              "items": ["identity-provider"],
+              "attr": {
+                "authsource": "keycloak",
+                "server_url": "https://auth.demo.mailcow.tld",
+                "realm": "mailcow",
+                "client_id": "mailcow_terraform",
+                "client_secret": "example",
+                "redirect_url": "https://demo.mailcow.tld",
+                "version": "26.1.3"
+              }
+            }'
+
       - uses: actions/checkout@v4
 
       - name: Set up Go
