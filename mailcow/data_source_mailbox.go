@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -30,6 +31,12 @@ func dataSourceMailbox() *schema.Resource {
 			"local_part": {
 				Type:        schema.TypeString,
 				Description: "left part of email address",
+				Computed:    true,
+			},
+			"authsource": {
+				Type:        schema.TypeString,
+				Description: "Authentication source",
+				Default:     "mailcow",
 				Computed:    true,
 			},
 			"full_name": {
@@ -109,6 +116,7 @@ func dataSourceMailboxRead(ctx context.Context, d *schema.ResourceData, m interf
 
 	exclude := []string{"password"}
 	mailboxAttributes := []string{
+		"authsource",
 		"force_pw_update",
 		"tls_enforce_in",
 		"tls_enforce_out",

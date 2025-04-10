@@ -2,6 +2,8 @@ package mailcow
 
 import (
 	"context"
+	"fmt"
+	"slices"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -37,6 +39,21 @@ func resourceMailbox() *schema.Resource {
 				Description: "left part of email address",
 				Required:    true,
 				ForceNew:    true,
+			},
+			"authsource": {
+				Type:        schema.TypeString,
+				Description: "Authentication source to use. One of: generic-oidc, mailcow, keycloak, ldap.",
+				Default:     "mailcow",
+				Optional:    true,
+				ValidateFunc: func(val any, key string) ([]string, []error) {
+					v := val.(string)
+					allowed := []string{"mailcow", "generic-oidc", "keycloak", "ldap"}
+
+					if !slices.Contains(allowed, v) {
+						return nil, []error{fmt.Errorf("%q must be one of %v, got %q", key, allowed, v)}
+					}
+					return nil, nil
+				},
 			},
 			"address": {
 				Type:        schema.TypeString,
@@ -164,6 +181,7 @@ func resourceMailboxRead(ctx context.Context, d *schema.ResourceData, m interfac
 		"password",
 	}
 	mailboxAttributes := []string{
+		"authsource",
 		"force_pw_update",
 		"tls_enforce_in",
 		"tls_enforce_out",
