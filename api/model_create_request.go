@@ -105,6 +105,11 @@ func (o *MailcowCreateRequest) Set(key string, value interface{}) {
 	o.payload[key] = &setValue
 }
 
+func (o *MailcowCreateRequest) Delete(key string) {
+	log.Print("[TRACE] CreateRequest Delete key: ", key)
+	delete(o.payload, key)
+}
+
 func (o *MailcowCreateRequest) GetAttr(key string) interface{} {
 	if !o.HasAttr(key) {
 		var ret bool
@@ -146,7 +151,7 @@ func (o MailcowCreateRequest) MarshalJSON(requestSpec map[string]interface{}) ([
 	//	toSerialize["attr"] = o.attr
 	//}
 	for key := range requestSpec {
-		//key := element.(map)
+		// key := element.(map)
 		if o.payload[key] != nil {
 			toSerialize[key] = o.payload[key]
 		}
