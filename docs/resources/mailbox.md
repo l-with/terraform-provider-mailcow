@@ -30,6 +30,7 @@ resource "mailcow_mailbox" "demo" {
 ### Optional
 
 - `active` (Boolean) is alias active or not
+- `authsource` (String) Authentication source to use. One of: generic-oidc, mailcow, keycloak, ldap.
 - `force_pw_update` (Boolean) forces the user to update its password on first login
 - `imap_access` (Boolean) if 'IMAP' is an allowed protocol
 - `pop3_access` (Boolean) if 'POP3' is an allowed protocol
