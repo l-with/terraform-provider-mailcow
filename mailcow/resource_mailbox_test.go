@@ -24,6 +24,7 @@ func TestAccResourceMailbox(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("mailcow_mailbox.mailbox", "address", localPart+"@"+domain),
 					resource.TestCheckResourceAttr("mailcow_mailbox.mailbox", "tls_enforce_out", "true"),
+					resource.TestCheckResourceAttr("mailcow_mailbox.mailbox", "authsource", mailcowAuthsourceInternal),
 				),
 			},
 			{
@@ -40,6 +41,20 @@ func TestAccResourceMailbox(t *testing.T) {
 					resource.TestCheckResourceAttr("mailcow_mailbox.mailbox", "full_name", fullName),
 					resource.TestCheckResourceAttr("mailcow_mailbox.mailbox", "tls_enforce_out", "true"),
 					resource.TestCheckResourceAttr("mailcow_mailbox.mailbox", "quota", strconv.Itoa(quota+1024)),
+				),
+			},
+			{
+				Config: testAccResourceMailboxChangeAuthsource(domain, domainMaxQuota, localPart, fullName, quota+1024),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("mailcow_mailbox.mailbox", "authsource", mailcowAuthsourceKeycloak),
+				),
+			},
+			{
+				Config: testAccResourceMailboxAuthsource(domain, localPart),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("mailcow_mailbox.mailbox_sso", "address", localPart+"-sso@"+domain),
+					resource.TestCheckResourceAttr("mailcow_mailbox.mailbox_sso", "tls_enforce_out", "true"),
+					resource.TestCheckResourceAttr("mailcow_mailbox.mailbox_sso", "authsource", mailcowAuthsourceKeycloak),
 				),
 			},
 			{
@@ -86,6 +101,44 @@ resource "mailcow_mailbox" "mailbox" {
   quota           = %[5]d
 }
 `, domain, domainMaxquota, localPart, fullName, quota)
+}
+
+func testAccResourceMailboxChangeAuthsource(domain string, domainMaxquota int, localPart string, fullName string, quota int) string {
+	return fmt.Sprintf(`
+resource "mailcow_domain" "domain" {
+  domain = "%[1]s"
+  maxquota = %[2]d
+}
+
+resource "mailcow_mailbox" "mailbox" {
+  local_part      = "%[3]s"
+  domain          = mailcow_domain.domain.id
+  password        = "secret-password"
+	force_pw_update = false
+	authsource      = "keycloak"
+  full_name       = "%[4]s"
+  tls_enforce_out = true
+  quota           = %[5]d
+}
+`, domain, domainMaxquota, localPart, fullName, quota)
+}
+
+func testAccResourceMailboxAuthsource(domain string, localPart string) string {
+	return fmt.Sprintf(`
+resource "mailcow_domain" "domain" {
+  domain = "%[1]s"
+}
+
+resource "mailcow_mailbox" "mailbox_sso" {
+  local_part      = "%[2]s-sso"
+  domain          = mailcow_domain.domain.id
+  password        = "secret-password"
+	force_pw_update = false
+	authsource      = "keycloak"
+  full_name       = "initial full name"
+  tls_enforce_out = true
+}
+`, domain, localPart)
 }
 
 func testAccResourceMailboxCreateError(domain string) string {
