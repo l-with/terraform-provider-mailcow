@@ -26,6 +26,7 @@ data "mailcow_mailbox" "mailbox" {
 ### Read-Only
 
 - `active` (Boolean) is alias active or not
+- `authsource` (String) Authentication source
 - `domain` (String) domain name
 - `force_pw_update` (Boolean) forces the user to update its password on first login
 - `full_name` (String) Full name of the mailbox user
