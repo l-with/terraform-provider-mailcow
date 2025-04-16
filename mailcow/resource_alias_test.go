@@ -40,6 +40,39 @@ func TestAccResourceAlias(t *testing.T) {
 				),
 			},
 			{
+				Config: testAccResourceAliasSimpleUpdateToSpam(fmt.Sprintf(aliasLocalPart, "1")),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("mailcow_alias.simple", "goto", gotoSpamDestination),
+				),
+			},
+			{
+				Config: testAccResourceAliasSimpleUpdate(fmt.Sprintf(aliasLocalPart, "1")),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("mailcow_alias.simple", "goto", "demo@440044.xyz"),
+				),
+			},
+			{
+				Config: testAccResourceAliasSpecial(fmt.Sprintf(aliasLocalPart, "1"), "ham"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("mailcow_alias.ham", "address", fmt.Sprintf(aliasLocalPart, "1")+"-ham@440044.xyz"),
+					resource.TestCheckResourceAttr("mailcow_alias.ham", "goto", gotoHamDestination),
+				),
+			},
+			{
+				Config: testAccResourceAliasSpecial(fmt.Sprintf(aliasLocalPart, "1"), "null"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("mailcow_alias.null", "address", fmt.Sprintf(aliasLocalPart, "1")+"-null@440044.xyz"),
+					resource.TestCheckResourceAttr("mailcow_alias.null", "goto", gotoDiscardDestination),
+				),
+			},
+			{
+				Config: testAccResourceAliasSpecial(fmt.Sprintf(aliasLocalPart, "1"), "spam"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("mailcow_alias.spam", "address", fmt.Sprintf(aliasLocalPart, "1")+"-spam@440044.xyz"),
+					resource.TestCheckResourceAttr("mailcow_alias.spam", "goto", gotoSpamDestination),
+				),
+			},
+			{
 				Config: testAccResourceAlias(domain, localPart, fmt.Sprintf(aliasLocalPart, "2")),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("mailcow_alias.alias", "address", fmt.Sprintf(aliasLocalPart, "2")+"@"+domain),
@@ -57,6 +90,44 @@ func TestAccResourceAlias(t *testing.T) {
 	})
 }
 
+func TestAccResourceAlias_Validation(t *testing.T) {
+	errorMessage := "is not allowed with other addresses"
+
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+				resource "mailcow_alias" "goto_validation" {
+					address   = "alias-xyzzy@xyzzy"
+					goto      = "goto-xyzzy@xyzzy,ham@localhost"
+				}
+				`,
+				ExpectError: regexp.MustCompile(errorMessage),
+			},
+			{
+				Config: `
+				resource "mailcow_alias" "goto_validation" {
+					address   = "alias-xyzzy@xyzzy"
+					goto      = "goto-xyzzy@xyzzy,null@localhost"
+				}
+				`,
+				ExpectError: regexp.MustCompile(errorMessage),
+			},
+			{
+				Config: `
+				resource "mailcow_alias" "goto_validation" {
+					address   = "alias-xyzzy@xyzzy"
+					goto      = "goto-xyzzy@xyzzy,spam@localhost"
+				}
+				`,
+				ExpectError: regexp.MustCompile(errorMessage),
+			},
+		},
+	})
+}
+
 func testAccResourceAliasSimple(aliasLocalPart string) string {
 	return fmt.Sprintf(`
 resource "mailcow_alias" "simple" {
@@ -66,11 +137,30 @@ resource "mailcow_alias" "simple" {
 `, aliasLocalPart)
 }
 
+func testAccResourceAliasSpecial(aliasLocalPart, specialValue string) string {
+	return fmt.Sprintf(`
+resource "mailcow_alias" "%[1]s" {
+  address = "%[2]s-%[1]s@440044.xyz"
+  goto    = "%[1]s@localhost"
+}
+`, specialValue, aliasLocalPart)
+}
+
 func testAccResourceAliasSimpleUpdate(aliasLocalPart string) string {
 	return fmt.Sprintf(`
 resource "mailcow_alias" "simple" {
   address      = "%[1]s-demo@440044.xyz"
   goto         = "demo@440044.xyz"
+  sogo_visible = true
+}
+`, aliasLocalPart)
+}
+
+func testAccResourceAliasSimpleUpdateToSpam(aliasLocalPart string) string {
+	return fmt.Sprintf(`
+resource "mailcow_alias" "simple" {
+  address      = "%[1]s-demo@440044.xyz"
+  goto         = "spam@localhost"
   sogo_visible = true
 }
 `, aliasLocalPart)
