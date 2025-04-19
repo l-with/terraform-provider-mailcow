@@ -72,3 +72,11 @@ func (a *ApiService) MailcowGetDomainAdmin(ctx context.Context, id string) ApiMa
 		id:         id,
 	}
 }
+
+func (a *ApiService) MailcowGetIdentityProviderKeycloak(ctx context.Context) ApiMailcowGetRequest {
+	return ApiMailcowGetRequest{
+		ApiService: a,
+		ctx:        ctx,
+		endpoint:   "/api/v1/get/identity-provider",
+	}
+}

@@ -59,12 +59,22 @@ func NewUpdateDomainAdminRequest() *MailcowUpdateRequest {
 	return &this
 }
 
+func NewUpdateIdentityProviderKeycloakRequest() *MailcowUpdateRequest {
+	this := MailcowUpdateRequest{}
+	this.attr = make(map[string]interface{})
+	this.items = make([]string, 1)
+	this.endpoint = "/api/v1/edit/identity-provider"
+	this.ResourceName = "resourceIdentityProviderKeycloak"
+	return &this
+}
+
 func (o *MailcowUpdateRequest) DeleteAttr(key string) {
 	log.Print("[TRACE] UpdateRequest Delete attr: ", key)
 	delete(o.attr, key)
 }
 
 func (o *MailcowUpdateRequest) GetAttr(key string) interface{} {
+	log.Print("[TRACE] UpdateRequest Get attr: ", key)
 	if !o.HasAttr(key) {
 		var ret bool
 		return ret
