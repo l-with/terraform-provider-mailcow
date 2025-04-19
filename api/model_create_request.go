@@ -56,7 +56,7 @@ func NewCreateSyncjobRequest() *MailcowCreateRequest {
 func NewCreateOAuth2ClientRequest() *MailcowCreateRequest {
 	this := MailcowCreateRequest{}
 	this.payload = make(map[string]interface{})
-	this.endpoint = "/api/v1/edit/oauth2-client"
+	this.endpoint = "/api/v1/add/oauth2-client"
 	this.ResourceName = "resourceOAuth2Client"
 	return &this
 }
