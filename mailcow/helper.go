@@ -20,7 +20,7 @@ func resourceDataSet(rd *schema.ResourceData, argument string, value any, elem *
 			setValue = true
 		} else if stringValue == "0" {
 			setValue = false
-		} else {
+		} else if stringValue == "" {
 			setValue = false
 		}
 	case schema.TypeInt:
