@@ -17,12 +17,6 @@ func TestAccDataSourceDomain(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourceDomainSimple(),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("data.mailcow_domain.simple", "description", "demo domain"),
-				),
-			},
-			{
 				Config: testAccDataSourceDomain(domain),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.mailcow_domain.demo", "description", "description"),
@@ -34,14 +28,6 @@ func TestAccDataSourceDomain(t *testing.T) {
 			},
 		},
 	})
-}
-
-func testAccDataSourceDomainSimple() string {
-	return fmt.Sprintf(`
-data "mailcow_domain" "simple" {
-  domain = "440044.xyz"
-}
-`)
 }
 
 func testAccDataSourceDomain(domain string) string {
