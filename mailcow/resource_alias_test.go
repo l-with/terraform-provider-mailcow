@@ -9,8 +9,6 @@ import (
 )
 
 func TestAccResourceAlias(t *testing.T) {
-	//	domain := "domain-with4test-domain.440044.xyz"
-	//	localPart := "localpart-with4alias-test"
 	domain := fmt.Sprintf("with-alias-%s.domain-%s.xyz", randomLowerCaseString(4), randomLowerCaseString(4))
 	localPart := fmt.Sprintf("with-alias-%s", randomLowerCaseString(4))
 	percentS := "%s"
@@ -91,7 +89,7 @@ func TestAccResourceAlias(t *testing.T) {
 }
 
 func TestAccResourceAlias_Validation(t *testing.T) {
-	errorMessage := "is not allowed with other addresses"
+	errorMessage := "cannot contain other addresses"
 
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -99,29 +97,29 @@ func TestAccResourceAlias_Validation(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: `
-				resource "mailcow_alias" "goto_validation" {
-					address   = "alias-xyzzy@xyzzy"
-					goto      = "goto-xyzzy@xyzzy,ham@localhost"
-				}
-				`,
+					resource "mailcow_alias" "goto_ham_validation" {
+						address   = "alias-xyzzy@xyzzy"
+						goto      = "goto-xyzzy@xyzzy,ham@localhost"
+					}
+					`,
 				ExpectError: regexp.MustCompile(errorMessage),
 			},
 			{
 				Config: `
-				resource "mailcow_alias" "goto_validation" {
-					address   = "alias-xyzzy@xyzzy"
-					goto      = "goto-xyzzy@xyzzy,null@localhost"
-				}
-				`,
+						resource "mailcow_alias" "goto_validation" {
+							address   = "alias-xyzzy@xyzzy"
+							goto      = "goto-xyzzy@xyzzy,null@localhost"
+						}
+						`,
 				ExpectError: regexp.MustCompile(errorMessage),
 			},
 			{
 				Config: `
-				resource "mailcow_alias" "goto_validation" {
-					address   = "alias-xyzzy@xyzzy"
-					goto      = "goto-xyzzy@xyzzy,spam@localhost"
-				}
-				`,
+						resource "mailcow_alias" "goto_validation" {
+							address   = "alias-xyzzy@xyzzy"
+							goto      = "goto-xyzzy@xyzzy,spam@localhost"
+						}
+						`,
 				ExpectError: regexp.MustCompile(errorMessage),
 			},
 		},
