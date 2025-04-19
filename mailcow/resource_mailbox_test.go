@@ -110,12 +110,21 @@ resource "mailcow_domain" "domain" {
   maxquota = %[2]d
 }
 
+resource "mailcow_identity_provider_keycloak" "keycloak" {
+  server_url    = "https://auth.demo.mailcow.tld"
+  realm         = "mailcow"
+  client_id     = "mailcow_terraform"
+  client_secret = "example"
+  redirect_url  = "https://demo.mailcow.tld"
+  version       = "26.1.3"
+}
+
 resource "mailcow_mailbox" "mailbox" {
   local_part      = "%[3]s"
   domain          = mailcow_domain.domain.id
   password        = "secret-password"
-	force_pw_update = false
-	authsource      = "keycloak"
+  force_pw_update = false
+  authsource      = "keycloak"
   full_name       = "%[4]s"
   tls_enforce_out = true
   quota           = %[5]d

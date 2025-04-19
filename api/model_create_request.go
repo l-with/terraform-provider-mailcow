@@ -69,6 +69,14 @@ func NewCreateDomainAdminRequest() *MailcowCreateRequest {
 	return &this
 }
 
+func NewCreateIdentityProviderKeycloakRequest() *MailcowCreateRequest {
+	this := MailcowCreateRequest{}
+	this.payload = make(map[string]interface{})
+	this.endpoint = "/api/v1/edit/identity-provider"
+	this.ResourceName = "resourceIdentityProviderKeycloak"
+	return &this
+}
+
 func (o *MailcowCreateRequest) Get(key string) interface{} {
 	if !o.Has(key) {
 		var ret bool

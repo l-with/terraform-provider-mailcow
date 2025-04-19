@@ -61,6 +61,13 @@ func NewDeleteDomainAdminRequest() *MailcowDeleteRequest {
 	return &this
 }
 
+func NewDeleteIdentityProviderKeycloakRequest() *MailcowDeleteRequest {
+	this := MailcowDeleteRequest{}
+	this.endpoint = "/api/v1/delete/identity-provider"
+	this.ResourceName = "resourceIdentityProviderKeycloak"
+	return &this
+}
+
 func (o *MailcowDeleteRequest) GetItem() *string {
 	log.Print("[TRACE] GetItem")
 	if !o.HasItem() {

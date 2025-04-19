@@ -17,9 +17,11 @@ func resourceDataSet(rd *schema.ResourceData, argument string, value any, elem *
 	switch elem.Type {
 	case schema.TypeBool:
 		if stringValue == "1" {
-			return rd.Set(argument, true)
+			setValue = true
 		} else if stringValue == "0" {
-			return rd.Set(argument, false)
+			setValue = false
+		} else if stringValue == "" {
+			setValue = false
 		}
 	case schema.TypeInt:
 		var setValueInt int
@@ -27,7 +29,7 @@ func resourceDataSet(rd *schema.ResourceData, argument string, value any, elem *
 		if err != nil {
 			return err
 		}
-		return rd.Set(argument, setValueInt)
+		setValue = setValueInt
 	case schema.TypeList:
 		if value != nil {
 			num := len(value.([]interface{}))
@@ -35,13 +37,13 @@ func resourceDataSet(rd *schema.ResourceData, argument string, value any, elem *
 			for i, item := range value.([]interface{}) {
 				list[i] = item.(string)
 			}
-			return rd.Set(argument, list)
+			setValue = list
 		} else {
 			list := make([]string, 0, 0)
-			return rd.Set(argument, list)
+			setValue = list
 		}
 	case schema.TypeString:
-		return rd.Set(argument, stringValue)
+		setValue = stringValue
 	default:
 		setValue = stringValue
 	}
