@@ -114,6 +114,7 @@ func dataSourceMailboxRead(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	exclude := []string{"password"}
+	mailbox["quota"] = int(mailbox["quota"].(float64)) / (1024 * 1024)
 	mailboxAttributes := []string{
 		"force_pw_update",
 		"tls_enforce_in",
