@@ -8,7 +8,7 @@ require (
 	github.com/hashicorp/go-cty v1.5.0
 	github.com/hashicorp/terraform-plugin-docs v0.23.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.38.1
-	golang.org/x/oauth2 v0.31.0
+	golang.org/x/oauth2 v0.32.0
 )
 
 require (
