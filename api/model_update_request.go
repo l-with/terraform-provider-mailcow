@@ -50,6 +50,15 @@ func NewUpdateSyncjobRequest() *MailcowUpdateRequest {
 	return &this
 }
 
+func NewUpdateRelayhostRequest() *MailcowUpdateRequest {
+	this := MailcowUpdateRequest{}
+	this.attr = make(map[string]interface{})
+	this.items = make([]string, 1)
+	this.endpoint = "/api/v1/edit/relayhost"
+	this.ResourceName = "resourceRelayhost"
+	return &this
+}
+
 func NewUpdateDomainAdminRequest() *MailcowUpdateRequest {
 	this := MailcowUpdateRequest{}
 	this.attr = make(map[string]interface{})
