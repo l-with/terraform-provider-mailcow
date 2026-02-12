@@ -2,11 +2,12 @@ package mailcow
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"log"
 	"math/rand"
 	"strconv"
 	"time"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceDataSet(rd *schema.ResourceData, argument string, value any, elem *schema.Schema) error {
@@ -39,7 +40,7 @@ func resourceDataSet(rd *schema.ResourceData, argument string, value any, elem *
 			}
 			setValue = list
 		} else {
-			list := make([]string, 0, 0)
+			list := make([]string, 0)
 			setValue = list
 		}
 	case schema.TypeString:

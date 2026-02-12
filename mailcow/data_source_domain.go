@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"reflect"
 )
 
 func dataSourceDomain() *schema.Resource {
@@ -166,7 +167,7 @@ func dataSourceDomainRead(ctx context.Context, d *schema.ResourceData, m interfa
 			return diag.FromErr(err)
 		}
 	} else {
-		tags := make([]string, 0, 0)
+		tags := make([]string, 0)
 		err = d.Set("tags", tags)
 		if err != nil {
 			return diag.FromErr(err)

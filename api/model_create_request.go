@@ -13,11 +13,23 @@ type MailcowCreateRequest struct {
 	ResourceName string
 }
 
+func (o *MailcowCreateRequest) GetPayload() map[string]interface{} {
+	return o.payload
+}
+
 func NewCreateAliasRequest() *MailcowCreateRequest {
 	this := MailcowCreateRequest{}
 	this.payload = make(map[string]interface{})
 	this.endpoint = "/api/v1/add/alias"
 	this.ResourceName = "resourceAlias"
+	return &this
+}
+
+func NewCreateAliasDomainRequest() *MailcowCreateRequest {
+	this := MailcowCreateRequest{}
+	this.payload = make(map[string]interface{})
+	this.endpoint = "/api/v1/add/alias-domain"
+	this.ResourceName = "resourceAliasDomain"
 	return &this
 }
 

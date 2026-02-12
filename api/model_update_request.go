@@ -23,6 +23,15 @@ func NewUpdateAliasRequest() *MailcowUpdateRequest {
 	return &this
 }
 
+func NewUpdateAliasDomainRequest() *MailcowUpdateRequest {
+	this := MailcowUpdateRequest{}
+	this.attr = make(map[string]interface{})
+	this.items = make([]string, 1)
+	this.endpoint = "/api/v1/edit/alias-domain"
+	this.ResourceName = "resourceAliasDomain"
+	return &this
+}
+
 func NewUpdateMailboxRequest() *MailcowUpdateRequest {
 	this := MailcowUpdateRequest{}
 	this.attr = make(map[string]interface{})
