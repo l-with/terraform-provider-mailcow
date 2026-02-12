@@ -19,6 +19,13 @@ func NewDeleteAliasRequest() *MailcowDeleteRequest {
 	return &this
 }
 
+func NewDeleteAliasDomainRequest() *MailcowDeleteRequest {
+	this := MailcowDeleteRequest{}
+	this.endpoint = "/api/v1/delete/alias-domain"
+	this.ResourceName = "resourceAliasDomain"
+	return &this
+}
+
 func NewDeleteDomainRequest() *MailcowDeleteRequest {
 	this := MailcowDeleteRequest{}
 	this.endpoint = "/api/v1/delete/domain"

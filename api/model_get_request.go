@@ -11,6 +11,15 @@ func (a *ApiService) MailcowGetAlias(ctx context.Context, id string) ApiMailcowG
 	}
 }
 
+func (a *ApiService) MailcowGetAliasDomain(ctx context.Context, id string) ApiMailcowGetRequest {
+	return ApiMailcowGetRequest{
+		ApiService: a,
+		ctx:        ctx,
+		endpoint:   "/api/v1/get/alias-domain/{id}",
+		id:         id,
+	}
+}
+
 func (a *ApiService) MailcowGetDomain(ctx context.Context, id string) ApiMailcowGetRequest {
 	return ApiMailcowGetRequest{
 		ApiService: a,

@@ -3,8 +3,9 @@ package mailcow
 import (
 	"context"
 	"crypto/tls"
-	"github.com/l-with/terraform-provider-mailcow/api"
 	"net/http"
+
+	"github.com/l-with/terraform-provider-mailcow/api"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -36,6 +37,7 @@ func Provider() *schema.Provider {
 		ResourcesMap: map[string]*schema.Resource{
 			"mailcow_alias":                      resourceAlias(),
 			"mailcow_domain":                     resourceDomain(),
+			"mailcow_domain_alias":               resourceDomainAlias(),
 			"mailcow_identity_provider_keycloak": resourceIdentityProviderKeycloak(),
 			"mailcow_mailbox":                    resourceMailbox(),
 			"mailcow_dkim":                       resourceDkim(),
@@ -70,7 +72,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	config.AddDefaultHeader("accept", "application/json")
 	config.Debug = true
 
-	customTransport := &(*http.DefaultTransport.(*http.Transport)) // make shallow copy
+	customTransport := http.DefaultTransport.(*http.Transport).Clone() // make shallow copy
 	customTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure}
 	client := &http.Client{Transport: customTransport}
 	config.HTTPClient = client
