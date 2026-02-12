@@ -8,8 +8,12 @@ import (
 )
 
 func TestAccResourceDomainAlias(t *testing.T) {
-	aliasDomain := "alias-test.com"
-	targetDomain := "test.com"
+	percentS := "%s"
+	aliasDomainFmt := fmt.Sprintf("alias-%s%s.domain-%s.xyz", randomLowerCaseString(4), percentS, randomLowerCaseString(4))
+	targetDomainFmt := fmt.Sprintf("target-%s%s.domain-%s.xyz", randomLowerCaseString(4), percentS, randomLowerCaseString(4))
+
+	aliasDomain := fmt.Sprintf(aliasDomainFmt, "1")
+	targetDomain := fmt.Sprintf(targetDomainFmt, "1")
 
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -35,19 +39,27 @@ func TestAccResourceDomainAlias(t *testing.T) {
 
 func testAccResourceDomainAlias(aliasDomain, targetDomain string) string {
 	return fmt.Sprintf(`
+resource "mailcow_domain" "target" {
+  domain = "%s"
+}
+
 resource "mailcow_domain_alias" "test" {
   alias_domain  = "%s"
-  target_domain = "%s"
+  target_domain = mailcow_domain.target.domain
 }
-`, aliasDomain, targetDomain)
+`, targetDomain, aliasDomain)
 }
 
 func testAccResourceDomainAliasInactive(aliasDomain, targetDomain string) string {
 	return fmt.Sprintf(`
+resource "mailcow_domain" "target" {
+  domain = "%s"
+}
+
 resource "mailcow_domain_alias" "test" {
   alias_domain  = "%s"
-  target_domain = "%s"
+  target_domain = mailcow_domain.target.domain
   active        = false
 }
-`, aliasDomain, targetDomain)
+`, targetDomain, aliasDomain)
 }
