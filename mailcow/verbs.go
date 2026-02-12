@@ -3,7 +3,6 @@ package mailcow
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 
@@ -16,13 +15,13 @@ func checkResponse(response api.MailcowResponseArray, resourceName, info string)
 	t := *response.GetFinalType()
 	log.Print("[TRACE] checkResponse t: ", t)
 	if t != "success" {
-		return errors.New(fmt.Sprintf(
+		return fmt.Errorf(
 			"%s '%s': %s (%s)",
 			resourceName,
 			info,
 			t,
 			*response.GetFinalMsgs(),
-		))
+		)
 	}
 	return nil
 }

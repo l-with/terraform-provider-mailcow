@@ -3,12 +3,12 @@ package mailcow
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"log"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/l-with/terraform-provider-mailcow/api"
-	"log"
 )
 
 func resourceSyncjob() *schema.Resource {
@@ -281,7 +281,7 @@ func getSyncJob(ctx context.Context, c *APIClient, emailAddress string, attribut
 		}
 	}
 	if syncJob == nil {
-		return nil, errors.New(fmt.Sprintf("syncjob user2=%s and %s=%s not found", emailAddress, attributeKey, attributeValue))
+		return nil, fmt.Errorf("syncjob user2=%s and %s=%s not found", emailAddress, attributeKey, attributeValue)
 	}
 	return syncJob, nil
 }
