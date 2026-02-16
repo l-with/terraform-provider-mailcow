@@ -2,12 +2,12 @@ package mailcow
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"log"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/l-with/terraform-provider-mailcow/api"
-	"log"
 )
 
 func resourceOAuth2Client() *schema.Resource {
@@ -90,7 +90,7 @@ func getId(ctx context.Context, client *api.APIClient, redirectUri string) (*str
 			return &id, nil
 		}
 	}
-	return nil, errors.New(fmt.Sprintf("redirect_uri not found: %s", redirectUri))
+	return nil, fmt.Errorf("redirect_uri not found: %s", redirectUri)
 }
 
 func resourceOAuth2ClientRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
