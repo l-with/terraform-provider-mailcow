@@ -2,12 +2,10 @@ package mailcow
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"regexp"
-)
-
-import (
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 func TestAccDataSourceDkim(t *testing.T) {
@@ -51,9 +49,9 @@ data "mailcow_dkim" "demo" {
 }
 
 func testAccDataSourceDkimError() string {
-	return fmt.Sprintf(`
+	return `
 data "mailcow_dkim" "error" {
   domain = "xyzzy"
 }
-`)
+`
 }

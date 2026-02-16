@@ -64,9 +64,9 @@ data "mailcow_mailbox" "mailbox" {
 }
 
 func testAccDataSourceMailboxError() string {
-	return fmt.Sprintf(`
+	return `
 data "mailcow_mailbox" "mailbox" {
   address = "xyzzy"
 }
-`)
+`
 }

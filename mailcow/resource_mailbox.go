@@ -190,17 +190,23 @@ func resourceMailboxRead(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 	mailbox["address"] = id
 	mailbox["full_name"] = mailbox["name"]
-	mailbox["quota"] = int(mailbox["quota"].(float64)) / (1024 * 1024)
+	if mailbox["quota"] != nil {
+		mailbox["quota"] = int(mailbox["quota"].(float64)) / (1024 * 1024)
+	} else {
+		mailbox["quota"] = 0
+	}
 
 	excludeAndAttributes := append(exclude, mailboxAttributes...)
 	err = setResourceData(resourceMailbox(), d, &mailbox, &excludeAndAttributes, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	attributes := mailbox["attributes"].(map[string]interface{})
-	err = setResourceData(resourceMailbox(), d, &attributes, &exclude, &mailboxAttributes)
-	if err != nil {
-		return diag.FromErr(err)
+	if mailbox["attributes"] != nil {
+		attributes := mailbox["attributes"].(map[string]interface{})
+		err = setResourceData(resourceMailbox(), d, &attributes, &exclude, &mailboxAttributes)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	d.SetId(id)

@@ -2,12 +2,10 @@ package mailcow
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"regexp"
-)
-
-import (
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 func TestAccDataSourceDomain(t *testing.T) {
@@ -44,9 +42,9 @@ data "mailcow_domain" "demo" {
 }
 
 func testAccDataSourceDomainError() string {
-	return fmt.Sprintf(`
+	return `
 data "mailcow_domain" "error" {
   domain = "xyzzy"
 }
-`)
+`
 }

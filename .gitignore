@@ -13,6 +13,6 @@ terraform.tfstate*
 
 # terraform provider
 bin
-
+terraform-provider-*
 # try
 try
