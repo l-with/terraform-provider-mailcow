@@ -13,7 +13,19 @@ Provides a mailbox in mailcow. This can be used to create, modify, and delete ma
 resource "mailcow_mailbox" "demo" {
   domain     = "440044.xyz"
   local_part = "test"
+  full_name  = "Test"
   password   = "initial secretpassord"
+}
+
+# With Terraform 1.11 or later the password can be write-only: it is sent to
+# mailcow but never kept in the plan or the state. Bump the version to send a
+# new one.
+resource "mailcow_mailbox" "write_only" {
+  domain              = "440044.xyz"
+  local_part          = "test-wo"
+  full_name           = "Test write-only"
+  password_wo         = var.initial_password
+  password_wo_version = 1
 }
 ```
 
@@ -25,14 +37,18 @@ resource "mailcow_mailbox" "demo" {
 - `domain` (String) domain name
 - `full_name` (String) Full name of the mailbox user
 - `local_part` (String) left part of email address
-- `password` (String, Sensitive) mailbox password (the password is excluded from update)
 
 ### Optional
+
+> **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
 
 - `active` (Boolean) is alias active or not
 - `authsource` (String) Authentication source to use. One of: generic-oidc, mailcow, keycloak, ldap.
 - `force_pw_update` (Boolean) forces the user to update its password on first login
 - `imap_access` (Boolean) if 'IMAP' is an allowed protocol
+- `password` (String, Sensitive) mailbox password (the password is excluded from update). Stored in the state; prefer `password_wo`.
+- `password_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) mailbox password, write-only: sent to mailcow and never stored in the plan or the state (Terraform 1.11 or later). Set on create, and again whenever `password_wo_version` changes.
+- `password_wo_version` (Number) change this to send `password_wo` again on update; a write-only value cannot be compared, so this is how a new one is noticed.
 - `pop3_access` (Boolean) if 'POP3' is an allowed protocol
 - `quota` (Number) mailbox quota
 - `sieve_access` (Boolean) if 'Sieve' is an allowed protocol
