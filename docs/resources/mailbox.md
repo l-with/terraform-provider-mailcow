@@ -48,7 +48,7 @@ resource "mailcow_mailbox" "write_only" {
 - `imap_access` (Boolean) if 'IMAP' is an allowed protocol
 - `password` (String, Sensitive) mailbox password (the password is excluded from update). Stored in the state; prefer `password_wo`.
 - `password_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) mailbox password, write-only: sent to mailcow and never stored in the plan or the state (Terraform 1.11 or later). Set on create, and again whenever `password_wo_version` changes.
-- `password_wo_version` (Number) change this to send `password_wo` again on update; a write-only value cannot be compared, so this is how a new one is noticed.
+- `password_wo_version` (Number) change this to send `password_wo` again on update; a write-only value cannot be compared, so this is how a new one is noticed. After an import the first version is only recorded — the mailbox keeps the password it has.
 - `pop3_access` (Boolean) if 'POP3' is an allowed protocol
 - `quota` (Number) mailbox quota
 - `sieve_access` (Boolean) if 'Sieve' is an allowed protocol

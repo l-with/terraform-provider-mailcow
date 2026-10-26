@@ -82,7 +82,7 @@ func resourceMailbox() *schema.Resource {
 			},
 			"password_wo_version": {
 				Type:         schema.TypeInt,
-				Description:  "change this to send `password_wo` again on update; a write-only value cannot be compared, so this is how a new one is noticed.",
+				Description:  "change this to send `password_wo` again on update; a write-only value cannot be compared, so this is how a new one is noticed. After an import the first version is only recorded — the mailbox keeps the password it has.",
 				Optional:     true,
 				RequiredWith: []string{"password_wo"},
 			},
@@ -268,7 +268,12 @@ func resourceMailboxUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	mailcowUpdateRequest := api.NewUpdateMailboxRequest()
 
 	// A new write-only password is noticed by its version, never by its value.
-	if d.HasChange("password_wo_version") {
+	// A version the state has never held is not a new one: after an import
+	// the mailbox already has its password, and sending the configured one
+	// would reset every mailbox a configuration adopts. It is recorded, and
+	// only a later change sends.
+	if d.HasChange("password_wo_version") && !d.GetRawState().IsNull() &&
+		!d.GetRawState().GetAttr("password_wo_version").IsNull() {
 		password, diags := passwordFromConfig(d)
 		if diags.HasError() {
 			return diags

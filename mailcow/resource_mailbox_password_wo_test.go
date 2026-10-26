@@ -162,3 +162,58 @@ func TestMailboxPasswordWriteOnlyApply(t *testing.T) {
 		},
 	})
 }
+
+// TestMailboxPasswordWriteOnlyImport adopts a mailbox that already exists with
+// an import block. The import leaves password_wo_version unset in the state,
+// so the configured version reads as a change — and sending the password on
+// it would reset the password of every mailbox a configuration adopts. It is
+// recorded instead; only a later change of the version sends one.
+func TestMailboxPasswordWriteOnlyImport(t *testing.T) {
+	fake := &fakeMailcow{mailboxes: map[string]map[string]interface{}{
+		"wo@example.org": {
+			"username": "wo@example.org", "domain": "example.org", "local_part": "wo",
+			"name": "Write Only", "active": 1, "authsource": "mailcow", "quota": 0,
+			"attributes": map[string]interface{}{
+				"force_pw_update": "1", "tls_enforce_in": "0", "tls_enforce_out": "0", "sogo_access": "1",
+				"imap_access": "1", "pop3_access": "1", "smtp_access": "1", "sieve_access": "1",
+			},
+		},
+	}}
+	server := httptest.NewTLSServer(http.HandlerFunc(fake.handler))
+	defer server.Close()
+	host := strings.TrimPrefix(server.URL, "https://")
+
+	expectSent := func(want ...string) resource.TestCheckFunc {
+		return func(*terraform.State) error {
+			got := fake.sent()
+			if strings.Join(got, ",") != strings.Join(want, ",") {
+				return fmt.Errorf("passwords sent: %v, want %v", got, want)
+			}
+			return nil
+		}
+	}
+	adopt := `
+import {
+  to = mailcow_mailbox.wo
+  id = "wo@example.org"
+}
+`
+
+	resource.UnitTest(t, resource.TestCase{
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: adopt + testMailboxPasswordWoConfig(host, "throwaway-secret", 1),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("mailcow_mailbox.wo", "password_wo_version", "1"),
+					noValueInState("throwaway-secret"),
+					expectSent(),
+				),
+			},
+			{
+				Config: testMailboxPasswordWoConfig(host, "chosen-secret-2", 2),
+				Check:  expectSent("chosen-secret-2"),
+			},
+		},
+	})
+}
