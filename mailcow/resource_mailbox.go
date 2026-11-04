@@ -74,7 +74,7 @@ func resourceMailbox() *schema.Resource {
 			},
 			"password_wo": {
 				Type:         schema.TypeString,
-				Description:  "mailbox password, write-only: sent to mailcow and never stored in the plan or the state (Terraform 1.11 or later). Set on create, and again whenever `password_wo_version` changes.",
+				Description:  "mailbox password, write-only: sent to mailcow and never stored in the plan or the state (Terraform 1.11 or later, OpenTofu 1.11 or later). Set on create, and again whenever `password_wo_version` changes.",
 				Optional:     true,
 				Sensitive:    true,
 				WriteOnly:    true,
@@ -82,7 +82,7 @@ func resourceMailbox() *schema.Resource {
 			},
 			"password_wo_version": {
 				Type:         schema.TypeInt,
-				Description:  "change this to send `password_wo` again on update; a write-only value cannot be compared, so this is how a new one is noticed. After an import the first version is only recorded — the mailbox keeps the password it has.",
+				Description:  "change this to send `password_wo` again on update; a write-only value cannot be compared, so this is how a new one is noticed. Optional: without it the password is set on create and never touched again. `password_wo` is sent only when the version changes from one the state already holds; the first version an existing mailbox gets — after an import, when switching from `password`, or when added to a mailbox created without one — is only recorded, and the mailbox keeps the password it has. Change it again to send a new password.",
 				Optional:     true,
 				RequiredWith: []string{"password_wo"},
 			},
@@ -268,10 +268,10 @@ func resourceMailboxUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	mailcowUpdateRequest := api.NewUpdateMailboxRequest()
 
 	// A new write-only password is noticed by its version, never by its value.
-	// A version the state has never held is not a new one: after an import
-	// the mailbox already has its password, and sending the configured one
-	// would reset every mailbox a configuration adopts. It is recorded, and
-	// only a later change sends.
+	// A version the state has never held is not a new one: the mailbox already
+	// has its password — after an import, a switch from `password`, or a version
+	// added later — and sending the configured one would reset it. It is
+	// recorded, and only a later change sends.
 	if d.HasChange("password_wo_version") && !d.GetRawState().IsNull() &&
 		!d.GetRawState().GetAttr("password_wo_version").IsNull() {
 		password, diags := passwordFromConfig(d)
