@@ -2,7 +2,9 @@ package mailcow
 
 import (
 	"context"
+	"errors"
 
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -64,10 +66,25 @@ func resourceMailbox() *schema.Resource {
 				Required:    true,
 			},
 			"password": {
-				Type:        schema.TypeString,
-				Description: "mailbox password (the password is excluded from update)",
-				Required:    true,
-				Sensitive:   true,
+				Type:         schema.TypeString,
+				Description:  "mailbox password (the password is excluded from update). Stored in the state; prefer `password_wo`.",
+				Optional:     true,
+				Sensitive:    true,
+				ExactlyOneOf: []string{"password", "password_wo"},
+			},
+			"password_wo": {
+				Type:         schema.TypeString,
+				Description:  "mailbox password, write-only: sent to mailcow and never stored in the plan or the state (Terraform 1.11 or later, OpenTofu 1.11 or later). Set on create, and again whenever `password_wo_version` changes.",
+				Optional:     true,
+				Sensitive:    true,
+				WriteOnly:    true,
+				ExactlyOneOf: []string{"password", "password_wo"},
+			},
+			"password_wo_version": {
+				Type:         schema.TypeInt,
+				Description:  "change this to send `password_wo` again on update; a write-only value cannot be compared, so this is how a new one is noticed. Optional: without it the password is set on create and never touched again. `password_wo` is sent only when the version changes from one the state already holds; the first version an existing mailbox gets — after an import, when switching from `password`, or when added to a mailbox created without one — is only recorded, and the mailbox keeps the password it has. Change it again to send a new password.",
+				Optional:     true,
+				RequiredWith: []string{"password_wo"},
 			},
 			"quota": {
 				Type:        schema.TypeInt,
@@ -131,6 +148,34 @@ func resourceMailbox() *schema.Resource {
 	}
 }
 
+// passwordFields are never sent by the generic create and update helpers:
+// the password goes out as password and password2, and only when meant to.
+var passwordFields = []string{"password", "password_wo", "password_wo_version"}
+
+// mailboxPassword returns the password to send: `password` when set, else the
+// write-only `password_wo` from the configuration (which the state never holds).
+func mailboxPassword(password string, writeOnly cty.Value) (string, error) {
+	if password != "" {
+		return password, nil
+	}
+	if writeOnly.IsKnown() && !writeOnly.IsNull() && writeOnly.Type() == cty.String && writeOnly.AsString() != "" {
+		return writeOnly.AsString(), nil
+	}
+	return "", errors.New("one of password or password_wo must be set")
+}
+
+func passwordFromConfig(d *schema.ResourceData) (string, diag.Diagnostics) {
+	writeOnly, diags := d.GetRawConfigAt(cty.GetAttrPath("password_wo"))
+	if diags.HasError() {
+		return "", diags
+	}
+	password, err := mailboxPassword(d.Get("password").(string), writeOnly)
+	if err != nil {
+		return "", diag.FromErr(err)
+	}
+	return password, nil
+}
+
 func resourceMailboxImport(_ context.Context, d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
 	return []*schema.ResourceData{d}, nil
 }
@@ -148,11 +193,16 @@ func resourceMailboxCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	mailcowCreateRequest.Set("password2", d.Get("password"))
+	password, diags := passwordFromConfig(d)
+	if diags.HasError() {
+		return diags
+	}
+	mailcowCreateRequest.Set("password", password)
+	mailcowCreateRequest.Set("password2", password)
 
 	mapArguments := map[string]string{"full_name": "name"}
 
-	err = mailcowCreate(ctx, resourceMailbox(), d, address, nil, &mapArguments, mailcowCreateRequest, c)
+	err = mailcowCreate(ctx, resourceMailbox(), d, address, &passwordFields, &mapArguments, mailcowCreateRequest, c)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -175,9 +225,7 @@ func resourceMailboxRead(ctx context.Context, d *schema.ResourceData, m interfac
 		return diag.FromErr(err)
 	}
 
-	exclude := []string{
-		"password",
-	}
+	exclude := passwordFields
 	mailboxAttributes := []string{
 		"force_pw_update",
 		"tls_enforce_in",
@@ -219,13 +267,25 @@ func resourceMailboxUpdate(ctx context.Context, d *schema.ResourceData, m interf
 
 	mailcowUpdateRequest := api.NewUpdateMailboxRequest()
 
-	exclude := []string{
-		"password",
+	// A new write-only password is noticed by its version, never by its value.
+	// A version the state has never held is not a new one: the mailbox already
+	// has its password — after an import, a switch from `password`, or a version
+	// added later — and sending the configured one would reset it. It is
+	// recorded, and only a later change sends.
+	if d.HasChange("password_wo_version") && !d.GetRawState().IsNull() &&
+		!d.GetRawState().GetAttr("password_wo_version").IsNull() {
+		password, diags := passwordFromConfig(d)
+		if diags.HasError() {
+			return diags
+		}
+		mailcowUpdateRequest.SetAttr("password", password)
+		mailcowUpdateRequest.SetAttr("password2", password)
 	}
+
 	mapArguments := map[string]string{
 		"full_name": "name",
 	}
-	err := mailcowUpdate(ctx, resourceMailbox(), d, &exclude, &mapArguments, mailcowUpdateRequest, c)
+	err := mailcowUpdate(ctx, resourceMailbox(), d, &passwordFields, &mapArguments, mailcowUpdateRequest, c)
 	if err != nil {
 		return diag.FromErr(err)
 	}

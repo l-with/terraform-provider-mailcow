@@ -11,4 +11,35 @@ Provides a mailbox in mailcow. This can be used to create, modify, and delete ma
 ## Example Usage
 {{ tffile (printf "examples/resources/%s/resource.tf" .Name)}}
 
+## Write-only password
+
+`password_wo` requires Terraform 1.11 or later, or OpenTofu 1.11 or later. It is
+sent to mailcow on create and never stored in the plan or the state; `password`
+still works and is stored in the state.
+
+`password_wo_version` is optional. Without it the password is set on create and
+never touched again — the same as `password`. With it, changing the number sends
+`password_wo` again. The password is sent only when the version changes from one
+the state already holds, so the first version an existing mailbox gets — after
+an import, when switching from `password`, or when added to a mailbox created
+without one — is only recorded and the mailbox keeps its password. Change the
+version once more to set a new one.
+
+### Migrating from `password`
+
+Replace `password` with `password_wo` (and, if you want rotation,
+`password_wo_version`). The plan shows an in-place update with
+`password → null`: the password is not sent, the mailbox keeps it,
+and the password is removed from the state.
+
+```terraform
+resource "mailcow_mailbox" "demo" {
+  domain              = "440044.xyz"
+  local_part          = "test"
+  full_name           = "Test"
+  password_wo         = var.mailbox_password
+  password_wo_version = 1
+}
+```
+
 {{ .SchemaMarkdown | trimspace }}

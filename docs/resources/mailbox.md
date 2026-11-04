@@ -13,7 +13,60 @@ Provides a mailbox in mailcow. This can be used to create, modify, and delete ma
 resource "mailcow_mailbox" "demo" {
   domain     = "440044.xyz"
   local_part = "test"
+  full_name  = "Test"
   password   = "initial secretpassord"
+}
+
+# With Terraform 1.11+ or OpenTofu 1.11+ the password can be write-only: it is
+# sent to mailcow but never kept in the plan or the state. An ephemeral variable
+# keeps it out of a saved plan as well; pass it with TF_VAR_mailbox_password
+# rather than a .tfvars file.
+variable "mailbox_password" {
+  type      = string
+  sensitive = true
+  ephemeral = true
+}
+
+resource "mailcow_mailbox" "write_only" {
+  domain      = "440044.xyz"
+  local_part  = "test-wo"
+  full_name   = "Test write-only"
+  password_wo = var.mailbox_password
+
+  # Optional. Without it the password is set on create and never touched
+  # again, as with `password`. Bump it to send a new password.
+  password_wo_version = 1
+}
+```
+
+## Write-only password
+
+`password_wo` requires Terraform 1.11 or later, or OpenTofu 1.11 or later. It is
+sent to mailcow on create and never stored in the plan or the state; `password`
+still works and is stored in the state.
+
+`password_wo_version` is optional. Without it the password is set on create and
+never touched again — the same as `password`. With it, changing the number sends
+`password_wo` again. The password is sent only when the version changes from one
+the state already holds, so the first version an existing mailbox gets — after
+an import, when switching from `password`, or when added to a mailbox created
+without one — is only recorded and the mailbox keeps its password. Change the
+version once more to set a new one.
+
+### Migrating from `password`
+
+Replace `password` with `password_wo` (and, if you want rotation,
+`password_wo_version`). The plan shows an in-place update with
+`password → null`: the password is not sent, the mailbox keeps it,
+and the password is removed from the state.
+
+```terraform
+resource "mailcow_mailbox" "demo" {
+  domain              = "440044.xyz"
+  local_part          = "test"
+  full_name           = "Test"
+  password_wo         = var.mailbox_password
+  password_wo_version = 1
 }
 ```
 
@@ -25,14 +78,18 @@ resource "mailcow_mailbox" "demo" {
 - `domain` (String) domain name
 - `full_name` (String) Full name of the mailbox user
 - `local_part` (String) left part of email address
-- `password` (String, Sensitive) mailbox password (the password is excluded from update)
 
 ### Optional
+
+> **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
 
 - `active` (Boolean) is alias active or not
 - `authsource` (String) Authentication source to use. One of: generic-oidc, mailcow, keycloak, ldap.
 - `force_pw_update` (Boolean) forces the user to update its password on first login
 - `imap_access` (Boolean) if 'IMAP' is an allowed protocol
+- `password` (String, Sensitive) mailbox password (the password is excluded from update). Stored in the state; prefer `password_wo`.
+- `password_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) mailbox password, write-only: sent to mailcow and never stored in the plan or the state (Terraform 1.11 or later, OpenTofu 1.11 or later). Set on create, and again whenever `password_wo_version` changes.
+- `password_wo_version` (Number) change this to send `password_wo` again on update; a write-only value cannot be compared, so this is how a new one is noticed. Optional: without it the password is set on create and never touched again. `password_wo` is sent only when the version changes from one the state already holds; the first version an existing mailbox gets — after an import, when switching from `password`, or when added to a mailbox created without one — is only recorded, and the mailbox keeps the password it has. Change it again to send a new password.
 - `pop3_access` (Boolean) if 'POP3' is an allowed protocol
 - `quota` (Number) mailbox quota
 - `sieve_access` (Boolean) if 'Sieve' is an allowed protocol
