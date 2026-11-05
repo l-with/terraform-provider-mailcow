@@ -89,3 +89,20 @@ func (a *ApiService) MailcowGetIdentityProviderKeycloak(ctx context.Context) Api
 		endpoint:   "/api/v1/get/identity-provider",
 	}
 }
+
+func (a *ApiService) MailcowGetRelayhost(ctx context.Context, id string) ApiMailcowGetRequest {
+	return ApiMailcowGetRequest{
+		ApiService: a,
+		ctx:        ctx,
+		endpoint:   "/api/v1/get/relayhost/{id}",
+		id:         id,
+	}
+}
+
+func (a *ApiService) MailcowGetRelayhosts(ctx context.Context) ApiMailcowGetRequest {
+	return ApiMailcowGetRequest{
+		ApiService: a,
+		ctx:        ctx,
+		endpoint:   "/api/v1/get/relayhost/all",
+	}
+}
