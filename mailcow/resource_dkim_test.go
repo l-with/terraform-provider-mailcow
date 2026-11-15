@@ -11,7 +11,7 @@ import (
 func TestAccResourceDkim(t *testing.T) {
 	domain := fmt.Sprintf("with-dkim-%s.dkim-%s.xyz", randomLowerCaseString(4), randomLowerCaseString(4))
 	length := 2048
-	resource.UnitTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{

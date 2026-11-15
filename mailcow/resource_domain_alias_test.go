@@ -15,7 +15,7 @@ func TestAccResourceDomainAlias(t *testing.T) {
 	aliasDomain := fmt.Sprintf(aliasDomainFmt, "1")
 	targetDomain := fmt.Sprintf(targetDomainFmt, "1")
 
-	resource.UnitTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{

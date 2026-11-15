@@ -14,7 +14,7 @@ func TestAccResourceAlias(t *testing.T) {
 	percentS := "%s"
 	aliasLocalPart := fmt.Sprintf("with-alias-%s-%s", randomLowerCaseString(4), percentS)
 
-	resource.UnitTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
@@ -88,11 +88,11 @@ func TestAccResourceAlias(t *testing.T) {
 	})
 }
 
-func TestAccResourceAlias_Validation(t *testing.T) {
+// Plan-time validation needs no server, so it runs in every `go test`.
+func TestResourceAlias_Validation(t *testing.T) {
 	errorMessage := "cannot contain other addresses"
 
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{

@@ -11,7 +11,7 @@ import (
 func TestAccResourceDomain(t *testing.T) {
 	percentS := "%s"
 	domainFmt := fmt.Sprintf("with-domain-%s%s.domain-%s.xyz", randomLowerCaseString(4), percentS, randomLowerCaseString(4))
-	resource.UnitTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{

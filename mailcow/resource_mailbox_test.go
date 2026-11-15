@@ -15,7 +15,7 @@ func TestAccResourceMailbox(t *testing.T) {
 	fullName := "new full name"
 	quota := 4096
 	domainMaxQuota := 5120
-	resource.UnitTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{

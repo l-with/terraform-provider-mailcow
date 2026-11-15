@@ -10,7 +10,7 @@ import (
 
 func TestAccResourceOAuth2Client(t *testing.T) {
 	redirectUri := fmt.Sprintf("https:/redirect%s.uri", randomLowerCaseString(4))
-	resource.UnitTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{

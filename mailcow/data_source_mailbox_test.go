@@ -15,7 +15,7 @@ func TestAccDataSourceMailbox(t *testing.T) {
 	fullName := "full name"
 	authSource := "mailcow"
 	quota := 10240
-	resource.UnitTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{

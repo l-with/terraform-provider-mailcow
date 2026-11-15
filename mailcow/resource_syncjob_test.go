@@ -13,7 +13,7 @@ func TestAccResourceSyncjob(t *testing.T) {
 
 	host1 := "example.com"
 	user1 := "demo@example.com"
-	resource.UnitTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
