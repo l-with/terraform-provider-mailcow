@@ -113,7 +113,7 @@ func dataSourceMailboxRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(errors.New(fmt.Sprint("mailbox '", id, "' not found")))
 	}
 
-	exclude := []string{"password"}
+	exclude := append([]string{}, passwordFields...)
 	mailbox["quota"] = int(mailbox["quota"].(float64)) / (1024 * 1024)
 	mailboxAttributes := []string{
 		"force_pw_update",
