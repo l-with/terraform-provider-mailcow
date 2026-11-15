@@ -22,7 +22,8 @@ jobs:
       - name: Test
         env:
           MAILCOW_INSECURE: true
-          # These secrets will need to be configured for the repository:
-          MAILCOW_HOST_NAME: ${{ secrets.MAILCOW_HOST_NAME }}
-          MAILCOW_API_KEY: ${{ secrets.MAILCOW_API_KEY }}
+          # Public demo instance and its published API key (see README).
+          # Not taken from secrets, because pull requests from forks do not get secrets.
+          MAILCOW_HOST_NAME: demo.mailcow.email
+          MAILCOW_API_KEY: 390448-22B69F-FA37D9-19701B-6F033F
         run: go test -v ./...
