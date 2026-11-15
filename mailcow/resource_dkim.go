@@ -2,6 +2,8 @@ package mailcow
 
 import (
 	"context"
+	"log"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/l-with/terraform-provider-mailcow/api"
@@ -86,6 +88,14 @@ func resourceDkimRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	dkim, err := readRequest(request)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	// No key for the domain is an empty object, as for a mailbox: gone from
+	// the state, so a refresh plans it anew and an import fails in words.
+	if len(dkim) == 0 {
+		log.Printf("[WARN] dkim for %s not found, removing it from the state", id)
+		d.SetId("")
+		return diags
 	}
 
 	dkim["domain"] = id
