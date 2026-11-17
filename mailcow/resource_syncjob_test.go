@@ -10,10 +10,6 @@ import (
 )
 
 func TestAccResourceSyncjob(t *testing.T) {
-	// mailcow 2026-11 replaced host1/port1/enc1 of add/syncjob with source_id (a sync source),
-	// so creating a sync job fails with imapsync_source_unavailable until the resource uses sync sources.
-	t.Skip("mailcow 2026-11: add/syncjob needs a source_id, mailcow_syncjob does not support sync sources yet")
-
 	domain := fmt.Sprintf("with-syncjob-%s.domain-%s.xyz", randomLowerCaseString(4), randomLowerCaseString(4))
 	localPart := fmt.Sprintf("with-syncjob-%s", randomLowerCaseString(4))
 	sourceName := fmt.Sprintf("with-syncjob-%s", randomLowerCaseString(4))
