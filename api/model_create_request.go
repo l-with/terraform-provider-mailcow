@@ -61,7 +61,15 @@ func NewCreateSyncjobRequest() *MailcowCreateRequest {
 	this := MailcowCreateRequest{}
 	this.payload = make(map[string]interface{})
 	this.endpoint = "/api/v1/add/syncjob"
-	this.ResourceName = "resourceAlias"
+	this.ResourceName = "resourceSyncjob"
+	return &this
+}
+
+func NewCreateSyncjobSourceRequest() *MailcowCreateRequest {
+	this := MailcowCreateRequest{}
+	this.payload = make(map[string]interface{})
+	this.endpoint = "/api/v1/add/syncjob_source"
+	this.ResourceName = "resourceSyncjobSource"
 	return &this
 }
 

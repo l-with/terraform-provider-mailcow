@@ -1,0 +1,26 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+---
+
+# {{.Name}} ({{.Type}})
+
+Provides a sync source in mailcow (mailcow 2026-11 or later).
+A sync source holds the IMAP server that sync jobs (`mailcow_syncjob`) copy mail from;
+it can be used by any number of sync jobs.
+
+Sources with OAuth2 (`XOAUTH2`) are not supported.
+
+## Example Usage
+{{ tffile (printf "examples/resources/%s/resource.tf" .Name)}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+A sync source is imported by its id, as shown in mailcow or returned by `/api/v1/get/syncjob_source/all`:
+
+```shell
+terraform import mailcow_syncjob_source.example 42
+```

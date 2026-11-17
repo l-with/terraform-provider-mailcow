@@ -54,6 +54,13 @@ func NewDeleteSyncjobRequest() *MailcowDeleteRequest {
 	return &this
 }
 
+func NewDeleteSyncjobSourceRequest() *MailcowDeleteRequest {
+	this := MailcowDeleteRequest{}
+	this.endpoint = "/api/v1/delete/syncjob_source"
+	this.ResourceName = "resourceSyncjobSource"
+	return &this
+}
+
 func NewDeleteOAuth2ClientRequest() *MailcowDeleteRequest {
 	this := MailcowDeleteRequest{}
 	this.endpoint = "/api/v1/delete/oauth2-client"

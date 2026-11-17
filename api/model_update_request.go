@@ -59,6 +59,15 @@ func NewUpdateSyncjobRequest() *MailcowUpdateRequest {
 	return &this
 }
 
+func NewUpdateSyncjobSourceRequest() *MailcowUpdateRequest {
+	this := MailcowUpdateRequest{}
+	this.attr = make(map[string]interface{})
+	this.items = make([]string, 1)
+	this.endpoint = "/api/v1/edit/syncjob_source"
+	this.ResourceName = "resourceSyncjobSource"
+	return &this
+}
+
 func NewUpdateDomainAdminRequest() *MailcowUpdateRequest {
 	this := MailcowUpdateRequest{}
 	this.attr = make(map[string]interface{})
