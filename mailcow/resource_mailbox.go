@@ -3,6 +3,8 @@ package mailcow
 import (
 	"context"
 	"errors"
+	"log"
+	"strings"
 
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -223,6 +225,17 @@ func resourceMailboxRead(ctx context.Context, d *schema.ResourceData, m interfac
 	mailbox, err := readRequest(request)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	// mailcow answers an address it holds no mailbox for with an empty object,
+	// not an error. Read as a mailbox, that is one with no domain and no local
+	// part, which a plan "replaces" — destroying whatever the address was meant
+	// to be. Gone from the state instead: a refresh plans it anew, and an
+	// import fails with "Cannot import non-existent remote object".
+	if !strings.EqualFold(mailboxAddress(mailbox), id) {
+		log.Printf("[WARN] mailbox %s not found, removing it from the state", id)
+		d.SetId("")
+		return diags
 	}
 
 	exclude := passwordFields
