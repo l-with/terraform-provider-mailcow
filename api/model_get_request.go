@@ -56,6 +56,16 @@ func (a *ApiService) MailcowGetSyncjob(ctx context.Context, id string) ApiMailco
 	}
 }
 
+// MailcowGetSyncjobSource gets one sync source by its numeric id, or all visible ones with id "all"
+func (a *ApiService) MailcowGetSyncjobSource(ctx context.Context, id string) ApiMailcowGetRequest {
+	return ApiMailcowGetRequest{
+		ApiService: a,
+		ctx:        ctx,
+		endpoint:   "/api/v1/get/syncjob_source/{id}",
+		id:         id,
+	}
+}
+
 func (a *ApiService) MailcowGetOAuth2Client(ctx context.Context, id string) ApiMailcowGetRequest {
 	return ApiMailcowGetRequest{
 		ApiService: a,

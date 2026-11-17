@@ -6,10 +6,30 @@ description: |-
 
 # {{.Name}} ({{.Type}})
 
-Provides a syncjob in mailcow. 
+Provides a syncjob in mailcow.
 This can be used to create, modify, and delete syncjobs.
+
+Requires mailcow 2026-11 or later: the IMAP server a sync job copies mail from is
+a sync source (`mailcow_syncjob_source`), referenced by `source_id`.
 
 ## Example Usage
 {{ tffile (printf "examples/resources/%s/resource.tf" .Name)}}
+
+## Migrating from `host1`, `port1` and `enc1`
+
+mailcow 2026-11 moved the IMAP server of a sync job into a sync source and migrated
+existing sync jobs to sources automatically. `host1`, `port1` and `enc1` were removed,
+and `custom_params` changed from text to a list of `option`/`value` blocks.
+
+1. Update mailcow to 2026-11 or later.
+2. Replace `host1`, `port1` and `enc1` with `source_id`: either a new `mailcow_syncjob_source`
+   or the source mailcow created during its migration, imported with
+   `terraform import mailcow_syncjob_source.<name> <id>`.
+3. Write `custom_params` as blocks, for example `--errorsmax 100` as
+   `custom_params { option = "errorsmax" value = "100" }`.
+
+The state of existing sync jobs is upgraded on the next plan and `source_id` is read
+from mailcow. With the imported source the plan shows no change for the sync job;
+with a new source it shows an in-place update that moves the sync job to it.
 
 {{ .SchemaMarkdown | trimspace }}

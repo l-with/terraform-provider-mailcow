@@ -31,7 +31,7 @@ func resourceDataSet(rd *schema.ResourceData, argument string, value any, elem *
 			return err
 		}
 		setValue = setValueInt
-	case schema.TypeList:
+	case schema.TypeList, schema.TypeSet:
 		if value != nil {
 			num := len(value.([]interface{}))
 			list := make([]string, num)
