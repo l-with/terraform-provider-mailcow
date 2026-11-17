@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"strings"
 
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -231,7 +232,7 @@ func resourceMailboxRead(ctx context.Context, d *schema.ResourceData, m interfac
 	// part, which a plan "replaces" — destroying whatever the address was meant
 	// to be. Gone from the state instead: a refresh plans it anew, and an
 	// import fails with "Cannot import non-existent remote object".
-	if mailboxAddress(mailbox) != id {
+	if !strings.EqualFold(mailboxAddress(mailbox), id) {
 		log.Printf("[WARN] mailbox %s not found, removing it from the state", id)
 		d.SetId("")
 		return diags

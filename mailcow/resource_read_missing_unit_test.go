@@ -43,6 +43,8 @@ func TestReadOfAMissingObjectRemovesIt(t *testing.T) {
 		{"missing mailbox", resourceMailbox(), resourceMailboxRead, "ghost@example.com", `{}`, true},
 		{"existing mailbox", resourceMailbox(), resourceMailboxRead, "ann@example.com",
 			`{"local_part":"ann","domain":"example.com","name":"Ann","quota":0,"active":1}`, false},
+		{"existing mailbox, mixed-case id", resourceMailbox(), resourceMailboxRead, "Ann@Example.com",
+			`{"local_part":"ann","domain":"example.com","name":"Ann","quota":0,"active":1}`, false},
 		{"missing dkim", resourceDkim(), resourceDkimRead, "example.com", `{}`, true},
 		{"existing dkim", resourceDkim(), resourceDkimRead, "example.com",
 			`{"dkim_selector":"dkim","length":"2048","pubkey":"MIIB"}`, false},
@@ -56,6 +58,32 @@ func TestReadOfAMissingObjectRemovesIt(t *testing.T) {
 			}
 			if gone := d.Id() == ""; gone != c.gone {
 				t.Errorf("removed from the state = %v, want %v", gone, c.gone)
+			}
+		})
+	}
+}
+
+// mailcow looks a mailbox up regardless of case and answers in lower case, so
+// the data source must find an existing mailbox asked for with a mixed-case
+// address and still report a missing one.
+func TestDataSourceMailboxAddressCase(t *testing.T) {
+	cases := []struct {
+		name    string
+		address string
+		body    string
+		found   bool
+	}{
+		{"existing mailbox, mixed-case address", "Ann@Example.com",
+			`{"local_part":"ann","domain":"example.com","name":"Ann","quota":0,"active":1,"attributes":{}}`, true},
+		{"missing mailbox", "ghost@example.com", `{}`, false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			res := dataSourceMailbox()
+			d := schema.TestResourceDataRaw(t, res.Schema, map[string]interface{}{"address": c.address})
+			diags := dataSourceMailboxRead(context.Background(), d, clientAnswering(t, c.body))
+			if found := !diags.HasError(); found != c.found {
+				t.Errorf("found = %v, want %v: %v", found, c.found, diags)
 			}
 		})
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -109,7 +110,7 @@ func dataSourceMailboxRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	if mailboxAddress(mailbox) != id {
+	if !strings.EqualFold(mailboxAddress(mailbox), id) {
 		return diag.FromErr(errors.New(fmt.Sprint("mailbox '", id, "' not found")))
 	}
 
